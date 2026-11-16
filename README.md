@@ -12,10 +12,11 @@ uv sync
 
 This creates a virtual environment in `.venv` and installs the project dependencies.
 
-Set two keys in a `.env` file in the project root (or in the environment):
+Set these in a `.env` file in the project root (or in the environment):
 
 - `NVIDIA_API_KEY` — authenticates the model endpoint the agent calls.
 - `MISTRAL_API_KEY` — authenticates with Mistral, needed to serve the agent and to talk to it through the Session API.
+- `ALLOW_DANGEROUS_LOCAL_HOST` — set to `1` to let the agent run commands directly on your machine.
 
 ## Run
 
