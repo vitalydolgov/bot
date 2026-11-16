@@ -1,5 +1,3 @@
-import asyncio
-
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -10,6 +8,7 @@ from mistralai.vibe.harness.runtime.completion.providers.openai import OpenAICom
 NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"
 
 agent = agents.Agent(
+    name="bot",
     model="nvidia/nemotron-3.5-lightning-30b-a3b",
     instructions="You are a concise assistant.",
     completion=OpenAICompletionConfig(
@@ -19,12 +18,3 @@ agent = agents.Agent(
         context_window=262144,
     ),
 )
-
-
-async def main() -> None:
-    result = await agent.run("Reply with exactly: pong")
-    print(result.text)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
