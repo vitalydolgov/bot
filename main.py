@@ -2,19 +2,18 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from config import BOT_DIR, CONFIG
 from mistralai import agents
 from mistralai.vibe.harness.runtime.completion.providers.openai import OpenAICompletionConfig
 
-NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"
-
 agent = agents.Agent(
     name="bot",
-    model="nvidia/nemotron-3.5-lightning-30b-a3b",
+    model=CONFIG.model,
     instructions="You are a concise assistant.",
     completion=OpenAICompletionConfig(
-        model="nvidia/nemotron-3.5-lightning-30b-a3b",
-        api_key_env_var="NVIDIA_API_KEY",
-        base_url=NVIDIA_BASE_URL,
-        context_window=262144,
+        model=CONFIG.model,
+        api_key_env_var=CONFIG.api_key_env_var,
+        base_url=CONFIG.base_url,
+        context_window=CONFIG.context_window,
     ),
 )
