@@ -12,6 +12,8 @@ uv sync
 
 This creates a virtual environment in `.venv` and installs the project dependencies.
 
+Set `NVIDIA_API_KEY` in a `.env` file in the project root (or in the environment).
+
 ## Run
 
 ```sh
