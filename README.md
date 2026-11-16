@@ -2,6 +2,11 @@
 
 A framework for creating specialized bots built on the Mistral Agents SDK. It provides a shared foundation for defining, configuring, and running purpose-built agents, so each bot can focus on its own domain and behavior.
 
+## Features
+
+- Persistent memory — the agent keeps durable notes in `.bot/MEMORY.md`, so it remembers things across turns and sessions.
+- Skills — the agent can use skills and author its own, so it can learn new procedures over time.
+
 ## Setup
 
 Requires [uv](https://docs.astral.sh/uv/). From the project root:
@@ -11,6 +16,8 @@ uv sync
 ```
 
 This creates a virtual environment in `.venv` and installs the project dependencies.
+
+A `python3` ≥ 3.12 must be on the login-shell PATH. Check with `bash -lc 'python3 --version'`; if it reports an older version, prepend a newer Python to PATH in `~/.bash_profile`.
 
 Set these in a `.env` file in the project root (or in the environment):
 
@@ -33,10 +40,6 @@ Remote — the agent is registered in your Mistral workspace and runs on your ma
 ```sh
 uv run agents serve
 ```
-
-## Memory
-
-The agent keeps durable notes in `.bot/MEMORY.md`. The file is read into its instructions at startup, and the agent can update it with its memory tools, so it remembers things across turns and sessions. The instructions themselves live in `instructions/prompts/memory.md`; `{memory_contents}` is filled in at startup.
 
 ## Smoke test
 
