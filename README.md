@@ -33,6 +33,10 @@ Remote — the agent is registered in your Mistral workspace and runs on your ma
 uv run agents serve
 ```
 
+## Memory
+
+The agent keeps durable notes in `.bot/MEMORY.md`. The file is read into its instructions at startup, and the agent can update it with its memory tools, so it remembers things across turns and sessions. The instructions themselves live in `prompts/memory.md`; `{memory_contents}` is filled in at startup.
+
 ## Smoke test
 
 ```sh
