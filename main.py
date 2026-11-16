@@ -10,7 +10,7 @@ from mistralai import agents
 from mistralai.vibe.harness.runtime.completion.providers.openai import OpenAICompletionConfig
 from skills import load_skills
 
-INTRO_PATH = Path(__file__).resolve().parent / "prompts" / "intro.md"
+INTRO_PATH = Path(__file__).resolve().parent / "instructions" / "prompts" / "intro.md"
 intro = INTRO_PATH.read_text(encoding="utf-8").strip()
 
 agent = agents.Agent(

@@ -3,6 +3,10 @@
 - Do not add comments to code; write code that is clear without them.
 - Keep `__init__.py` files thin; implementation belongs in modules.
 
+## Instructions
+
+- Agent-facing instructions (prompts, skills) must not reference anything outside the agent's workspace: no host paths, repo layout, or external services.
+
 ## Documentation
 
 - Write instructions in your own words rather than quoting the user verbatim.
