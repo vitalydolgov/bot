@@ -6,6 +6,7 @@ load_dotenv()
 
 from config import BOT_DIR, CONFIG
 from mcp_servers import load_mcps
+from modalities import detect_input_modalities
 from memory import MEMORY_TOOLS, memory_instructions
 from mistralai import agents
 from mistralai.vibe.harness.runtime.completion.providers.openai import OpenAICompletionConfig
@@ -27,5 +28,7 @@ agent = agents.Agent(
         api_key_env_var=CONFIG.api_key_env_var,
         base_url=CONFIG.base_url,
         context_window=CONFIG.context_window,
+        input_modalities=CONFIG.input_modalities
+        or detect_input_modalities(CONFIG.base_url, CONFIG.model, CONFIG.api_key_env_var),
     ),
 )

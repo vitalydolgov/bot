@@ -11,6 +11,7 @@ class AgentConfig:
     context_window: int
     base_url: str
     api_key_env_var: str
+    input_modalities: list[str] | None = None
 
 
 @dataclass(frozen=True)

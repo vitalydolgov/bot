@@ -12,6 +12,7 @@ Required. Configures the model the agent calls.
 | `context_window` | integer | The model's context window in tokens. Used to size automatic compaction of older turns. |
 | `base_url` | string | The base URL of an OpenAI-compatible completions API. |
 | `api_key_env_var` | string | Name of the environment variable holding the API key for that endpoint. The variable is read from the environment (or `.env`), never from this file. |
+| `input_modalities` | list of strings | The input modalities the model accepts, e.g. `["text", "image"]`. When unset, the bot detects them automatically. |
 
 Example:
 
