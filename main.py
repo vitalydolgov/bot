@@ -8,11 +8,14 @@ from config import CONFIG, PROFILE, WORKSPACE_DIR
 from mcp_servers import load_mcps
 from modalities import detect_input_modalities
 from memory import MEMORY_TOOLS, memory_instructions
+from patches.mistralai import apply_sdk_patches
 from mistralai import agents
 from mistralai.vibe.harness.runtime.completion.providers.openai import OpenAICompletionConfig
 from skills import seed_skills
 
 seed_skills()
+
+apply_sdk_patches()
 
 PROMPTS_DIR = Path(__file__).resolve().parent / "instructions" / "prompts"
 MODALITY_PROMPTS = {"image": PROMPTS_DIR / "vision.md"}
