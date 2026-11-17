@@ -19,7 +19,9 @@ If Chrome is not running, start it headless with a dedicated profile (never the 
 
 If the bridge is not running, start it:
 
-`nohup npx -y mcp-proxy --host 127.0.0.1 --port 8080 -- npx -y chrome-devtools-mcp@latest --browserUrl=http://127.0.0.1:9222 > chrome-mcp.log 2>&1 &`
+`nohup npx -y mcp-proxy --host 127.0.0.1 --port 8080 -- npx -y chrome-devtools-mcp@latest --browserUrl=http://127.0.0.1:9222 --filesystemRoot="$PWD" > chrome-mcp.log 2>&1 &`
+
+`--filesystemRoot` lets the file-writing tools (screenshots, traces) save into the workspace; without it they fail with `Access denied: ... is not within any of the configured workspace roots`. If the bridge is already running but was started without it, stop it with `pkill -f chrome-devtools-mcp` and start it again with the flag.
 
 Poll the two curl commands above until both answer (up to a minute on the first npx run). Then tell the user Chrome is ready — the chrome.* tools are available from the next turn.
 
