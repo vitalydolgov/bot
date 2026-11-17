@@ -52,4 +52,4 @@ def _load_mcp_configs(data: dict) -> dict[str, McpConfig]:
 
 _DATA = _load_config()
 CONFIG = _load_agent_config(_DATA)
-MCP_SERVERS = _load_mcp_configs(_DATA)
+MCP_SERVERS = {"chrome": McpConfig(url="http://127.0.0.1:8080/mcp"), **_load_mcp_configs(_DATA)}

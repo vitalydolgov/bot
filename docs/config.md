@@ -51,3 +51,11 @@ auth_header_env_vars = { Authorization = "GITHUB_MCP_TOKEN" }
 
 With `GITHUB_MCP_TOKEN=Bearer ghp_...` in `.env`, every request to the server carries `Authorization: Bearer ghp_...`. Keep the secret in `.env` (or the environment), never in `config.toml`. If a referenced variable is unset or blank, the server's credentials are reported as missing rather than sent empty.
 
+## Built-in `chrome` server
+
+The bot ships with a built-in `chrome` MCP server pointing at `http://127.0.0.1:8080/mcp`, so no declaration is needed for the default endpoint. To use a different endpoint, declare `[mcp.chrome]` with your own `url`; it replaces the built-in default. All other `[mcp.chrome]` keys are honored as usual.
+
+```toml
+[mcp.chrome]
+url = "http://127.0.0.1:9999/mcp"
+```

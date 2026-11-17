@@ -7,10 +7,18 @@ A framework for creating specialized bots built on the Mistral Agents SDK. It pr
 - Persistent memory — the agent remembers things across turns and sessions.
 - Skills — the agent can use skills and author its own, so it can learn new procedures over time.
 - MCP — the agent can call tools on remote MCP servers.
+- Chrome — the agent can drive a headless desktop Chrome browser through Chrome DevTools.
+
+## Prerequisites
+
+- [uv](https://docs.astral.sh/uv/) — installs the dependencies and runs the bot.
+- Python 3.12+ on the login-shell PATH. Check with `bash -lc 'python3 --version'`; if it reports an older version, prepend a newer Python to PATH in `~/.bash_profile`.
+- [Chrome](https://www.google.com/chrome/) — required for the chrome skill.
+- [Node.js](https://nodejs.org/) — provides `npx`, required for the chrome skill's MCP bridge.
 
 ## Setup
 
-Requires [uv](https://docs.astral.sh/uv/). From the project root:
+From the project root:
 
 ```sh
 uv sync
@@ -23,8 +31,6 @@ This creates a virtual environment in `.venv` and installs the project dependenc
 The bot is configured through `.bot/config.toml` — the model endpoint and any MCP servers. See [docs/config.md](docs/config.md) for the full format.
 
 ### Environment
-
-A `python3` ≥ 3.12 must be on the login-shell PATH. Check with `bash -lc 'python3 --version'`; if it reports an older version, prepend a newer Python to PATH in `~/.bash_profile`.
 
 Set these in a `.env` file in the project root (or in the environment). Variables already set in the environment take precedence over `.env`; the file only fills in what is missing.
 
