@@ -5,14 +5,25 @@
 ## Commands
 
 ```sh
-uv run local-agents serve           # register ./main.py's agent and poll for work
-uv run local-agents chat            # resume the latest session (or start one)
-uv run local-agents chat --new      # start a fresh session
+uv run local-agents serve                  # register every profile found in .bots/profiles/ and poll for work
+uv run local-agents serve --profile grad   # serve only grad
+uv run local-agents chat                   # resume the latest session (or start one)
+uv run local-agents chat --new             # start a fresh session
 ```
 
 ### `serve`
 
-Loads the agent from `./main.py` (override with `--path`), registers it in the local store under `--name` or the agent's own name, and polls for commands. Stop it with Ctrl+C. The agent stays registered but receives no sessions until you serve it again.
+Discovers the profiles to serve and loads each from `./main.py` (override with `--path`):
+
+- The common config `.bots/config.toml`, served as `bot`.
+- Every `.bots/profiles/<profile>/config.toml`, served as `<profile>`.
+
+Each profile is loaded with `BOT_PROFILE` set to its name, so it gets its own configuration and memory. A profile that fails to load is skipped with an error; the rest are served. Stop it with Ctrl+C. The agents stay registered but receive no sessions until you serve them again.
+
+- `--profile <name>` serves only that profile.
+- `BOT_PROFILE` set in the environment serves only that profile.
+
+The command queue is partitioned by agent: the worker claims only commands for the agents it serves, so profiles never run each other's sessions.
 
 ### `chat`
 

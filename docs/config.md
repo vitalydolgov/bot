@@ -3,7 +3,7 @@
 The bot reads its configuration from two files at startup:
 
 1. `.bots/config.toml` — the common config, shared by all profiles.
-2. `.bots/<profile>/config.toml` — the profile config, where `<profile>` is the `BOT_PROFILE` environment variable (it may also be set in `.env`). Read only when `BOT_PROFILE` is set; otherwise only the common config is read.
+2. `.bots/profiles/<profile>/config.toml` — the profile config, where `<profile>` is the `BOT_PROFILE` environment variable (it may also be set in `.env`). Read only when `BOT_PROFILE` is set; otherwise only the common config is read.
 
 A profile table replaces the common table of the same name entirely.
 

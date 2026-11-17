@@ -97,10 +97,16 @@ def enqueue(conn: sqlite3.Connection, session_id: str, kind: str, payload: dict)
     )
 
 
-def claim_command(conn: sqlite3.Connection) -> sqlite3.Row | None:
+def claim_command(conn: sqlite3.Connection, agents: list[str]) -> sqlite3.Row | None:
+    if not agents:
+        return None
+    placeholders = ", ".join("?" for _ in agents)
     conn.execute("BEGIN IMMEDIATE")
     row = conn.execute(
-        "SELECT * FROM commands WHERE status = 'pending' ORDER BY id LIMIT 1"
+        "SELECT commands.* FROM commands JOIN sessions ON sessions.id = commands.session_id "
+        f"WHERE commands.status = 'pending' AND sessions.agent IN ({placeholders}) "
+        "ORDER BY commands.id LIMIT 1",
+        agents,
     ).fetchone()
     if row is None:
         conn.execute("COMMIT")

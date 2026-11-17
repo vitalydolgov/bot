@@ -6,7 +6,8 @@ same shape without the service: a SQLite file holds the agent registry, the
 sessions, the command queue and the event log, and the worker polls it.
 Sessions are journaled to disk, so a later `chat` resumes the latest one.
 
-    uv run local-agents serve           # register ./main.py's agent and poll for work
+    uv run local-agents serve           # register every profile found in .bots/profiles/ and poll for work
+    uv run local-agents serve --profile grad   # serve only grad
     uv run local-agents chat            # resume the latest session (or start one)
     uv run local-agents chat --new      # start a fresh session
 """
@@ -28,9 +29,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
 
-    serve_parser = sub.add_parser("serve", help="Register the agent and poll for work.")
+    serve_parser = sub.add_parser("serve", help="Register the agent(s) and poll for work.")
     serve_parser.add_argument("--path", type=Path, default=Path("."))
-    serve_parser.add_argument("--name", default=None)
+    serve_parser.add_argument("--profile", default=None, help="Serve only this profile instead of all discovered profiles.")
 
     chat_parser = sub.add_parser("chat", help="Talk to a served agent.")
     chat_parser.add_argument("agent", nargs="?", default="bot")
@@ -42,7 +43,7 @@ def main() -> None:
     args = parser.parse_args()
     if args.command == "serve":
         try:
-            asyncio.run(serve(args.path, args.name))
+            asyncio.run(serve(args.path, args.profile))
         except KeyboardInterrupt:
             pass
     elif args.command == "chat":

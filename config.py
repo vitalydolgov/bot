@@ -21,7 +21,7 @@ def _load_profile() -> str | None:
 
 
 PROFILE = _load_profile()
-BOT_DIR = BOT_ROOT / PROFILE if PROFILE is not None else None
+BOT_DIR = BOT_ROOT / "profiles" / PROFILE if PROFILE is not None else None
 WORKSPACE_DIR = BOT_ROOT / "workspace"
 
 
