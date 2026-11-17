@@ -33,7 +33,7 @@ PAGE = """<!DOCTYPE html>
   .msg { max-width: 80ch; padding: 8px 12px; border-radius: 6px; white-space: pre-wrap; word-wrap: break-word; line-height: 1.4; }
   .user { align-self: flex-end; background: #264f78; color: #fff; }
   .assistant { align-self: flex-start; background: #2d2d2d; }
-  .event { align-self: flex-start; color: #888; font-size: 12px; padding: 0 4px; }
+  .event { align-self: flex-start; color: #888; font-size: 14px; padding: 0 4px; }
   .event.error { color: #f48771; }
   form { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid #333; }
   input[type=text] { flex: 1; background: #2d2d2d; border: 1px solid #444; border-radius: 4px; color: #d4d4d4; padding: 8px 12px; font: inherit; }
@@ -72,23 +72,30 @@ function setBusy(busy) {
   stop.hidden = !busy;
 }
 
+function nearBottom() {
+  return log.scrollHeight - log.scrollTop - log.clientHeight < 50;
+}
+
 function add(cls, text) {
+  const stick = nearBottom();
   const div = document.createElement('div');
   div.className = cls;
   div.textContent = text;
   log.appendChild(div);
-  log.scrollTop = log.scrollHeight;
+  if (stick) log.scrollTop = log.scrollHeight;
   return div;
 }
 
 function handleEvent(ev) {
   const p = ev.payload;
   switch (ev.kind) {
-    case 'reply':
+    case 'reply': {
+      const stick = nearBottom();
       if (!assistantBubble) assistantBubble = add('msg assistant', '');
       assistantBubble.textContent += p;
-      log.scrollTop = log.scrollHeight;
+      if (stick) log.scrollTop = log.scrollHeight;
       break;
+    }
     case 'reply_done':
       assistantBubble = null;
       break;
@@ -99,7 +106,7 @@ function handleEvent(ev) {
     }
     case 'tool_result': {
       const d = JSON.parse(p);
-      add('event', '<- ' + d.name + (d.error ? ' failed: ' + d.error : ' done'));
+      if (d.error) add('event error', '<- ' + d.name + ' failed: ' + d.error);
       break;
     }
     case 'notice':
