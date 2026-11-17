@@ -18,10 +18,7 @@ def read_memory_text() -> str:
 
 
 def memory_instructions() -> str:
-    content = read_memory_text().strip()
-    current = content if content else "(empty)"
-    template = PROMPT_PATH.read_text(encoding="utf-8").strip()
-    return template.replace("{memory_contents}", current)
+    return PROMPT_PATH.read_text(encoding="utf-8").strip()
 
 
 @agents.tool(model_access="direct")
