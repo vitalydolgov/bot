@@ -61,9 +61,11 @@ Set these in a `.env` file in the project root (or in the environment). Variable
 
 ## Run
 
-Two modes, depending on where the agent runs:
+Three modes, depending on where the agent runs:
 
-Local — the agent runs in this process, nothing is registered with Mistral, and only the model endpoint key is needed:
+### Local
+
+Local chat without session persistence — the agent runs in this process, nothing is registered with Mistral, and only the model endpoint key is needed:
 
 ```sh
 uv run agents chat
@@ -71,11 +73,24 @@ uv run agents chat
 
 Set `BOT_PROFILE` to run a different profile (see Profiles).
 
-Remote — the agent is registered in your Mistral workspace and runs on your machine as a worker, giving you a hosted chat link. It sends the agent's configuration to Mistral (pass `--no-send-config` to skip that) and polls Mistral's task queue over an outbound connection, so no inbound ports are opened. Stop it with Ctrl+C; the agent stays registered but receives no sessions until you serve it again:
+### Remote (Mistral)
+
+Session persists remotely — the agent is registered in your Mistral workspace and runs on your machine as a worker, giving you a hosted chat link. It sends the agent's configuration to Mistral (pass `--no-send-config` to skip that) and polls Mistral's task queue over an outbound connection, so no inbound ports are opened. Stop it with Ctrl+C; the agent stays registered but receives no sessions until you serve it again:
 
 ```sh
 uv run agents serve
 ```
+
+### Local worker
+
+Local chat with persistence — experimental. Like Remote, but without Mistral: a worker polls a local SQLite store instead of Mistral's task queue, and sessions are journaled to disk so they survive restarts. Nothing is registered with Mistral and the Session API is not used, so only the model endpoint key is needed. Run the worker in one terminal and chat in another:
+
+```sh
+uv run local-agents serve
+uv run local-agents chat
+```
+
+Set `BOT_PROFILE` to serve a different profile, and pass the profile name to `chat` (e.g. `uv run local-agents chat anotherbot`). See [docs/local_agents.md](docs/local_agents.md) for details.
 
 ## Smoke test
 
