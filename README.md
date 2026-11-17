@@ -4,8 +4,9 @@ A framework for creating specialized bots built on the Mistral Agents SDK. It pr
 
 ## Features
 
-- Persistent memory — the agent keeps durable notes in `.bot/MEMORY.md`, so it remembers things across turns and sessions.
+- Persistent memory — the agent remembers things across turns and sessions.
 - Skills — the agent can use skills and author its own, so it can learn new procedures over time.
+- MCP — the agent can call tools on remote MCP servers.
 
 ## Setup
 
@@ -17,19 +18,25 @@ uv sync
 
 This creates a virtual environment in `.venv` and installs the project dependencies.
 
+## Configuration
+
+The bot is configured through `.bot/config.toml` — the model endpoint and any MCP servers. See [docs/config.md](docs/config.md) for the full format.
+
+### Environment
+
 A `python3` ≥ 3.12 must be on the login-shell PATH. Check with `bash -lc 'python3 --version'`; if it reports an older version, prepend a newer Python to PATH in `~/.bash_profile`.
 
-Set these in a `.env` file in the project root (or in the environment):
+Set these in a `.env` file in the project root (or in the environment). Variables already set in the environment take precedence over `.env`; the file only fills in what is missing.
 
-- `NVIDIA_API_KEY` — authenticates the model endpoint the agent calls.
 - `MISTRAL_API_KEY` — authenticates with Mistral, needed to serve the agent and to talk to it through the Session API.
 - `ALLOW_DANGEROUS_LOCAL_HOST` — set to `1` to let the agent run commands directly on your machine.
+- Any variables referenced by `auth_header_env_vars` of the MCP servers in `.bot/config.toml`.
 
 ## Run
 
 Two modes, depending on where the agent runs:
 
-Local — the agent runs in this process, nothing is registered with Mistral, and only `NVIDIA_API_KEY` is needed:
+Local — the agent runs in this process, nothing is registered with Mistral, and only the model endpoint key is needed:
 
 ```sh
 uv run agents chat

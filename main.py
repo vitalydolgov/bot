@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from config import BOT_DIR, CONFIG
+from mcp_servers import load_mcps
 from memory import MEMORY_TOOLS, memory_instructions
 from mistralai import agents
 from mistralai.vibe.harness.runtime.completion.providers.openai import OpenAICompletionConfig
@@ -20,6 +21,7 @@ agent = agents.Agent(
     tools=MEMORY_TOOLS,
     environment=agents.DangerousLocalSandbox(workspace=str(BOT_DIR / "workspace")),
     skills=[*load_skills(), agents.SandboxWorkspaceSkills()],
+    mcps=load_mcps() or None,
     completion=OpenAICompletionConfig(
         model=CONFIG.model,
         api_key_env_var=CONFIG.api_key_env_var,
