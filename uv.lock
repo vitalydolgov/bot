@@ -7,6 +7,12 @@ resolution-markers = [
     "python_full_version < '3.13'",
 ]
 
+[manifest]
+members = [
+    "bot",
+    "local-agents",
+]
+
 [[package]]
 name = "aiocache"
 version = "0.12.3"
@@ -97,6 +103,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "httpx" },
+    { name = "local-agents" },
     { name = "mistralai-agents" },
     { name = "python-dotenv" },
 ]
@@ -104,6 +111,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "httpx", specifier = ">=0.28" },
+    { name = "local-agents", editable = "local_agents" },
     { name = "mistralai-agents", specifier = ">=1.1.3" },
     { name = "python-dotenv", specifier = ">=1.2.4" },
 ]
@@ -663,6 +671,17 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/87/39/9f0e1690727623f99489895db0e42048a3e1e8cea0627517c593e437fd83/libcst-1.9.0-cp315-cp315t-win_amd64.whl", hash = "sha256:4adf97bb1aff8039b0bd4991e2f838be6e4fad552821b26b71a5d1a653c2582f", size = 2177866, upload-time = "2026-08-11T05:54:25.144Z" },
     { url = "https://files.pythonhosted.org/packages/cd/79/9dc7811883e67ea771057e8937bc536eb3e77f3635fc5a93cd85b6fe1ea8/libcst-1.9.0-cp315-cp315t-win_arm64.whl", hash = "sha256:8f0dd08a5773d7051e105250b2a2c73d8065ea9b2d68e7e1bdc5244660e75f93", size = 2052908, upload-time = "2026-08-11T05:54:26.835Z" },
 ]
+
+[[package]]
+name = "local-agents"
+version = "0.1.0"
+source = { editable = "local_agents" }
+dependencies = [
+    { name = "mistralai-agents" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "mistralai-agents", specifier = ">=1.1.3" }]
 
 [[package]]
 name = "markdown-it-py"

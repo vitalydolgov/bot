@@ -1,0 +1,53 @@
+"""Local stand-in for the hosted control plane: a SQLite store the worker polls.
+
+`agents serve` registers the agent with the hosted control plane and polls its
+task queue; sessions and their events live on the service. This package is the
+same shape without the service: a SQLite file holds the agent registry, the
+sessions, the command queue and the event log, and the worker polls it.
+Sessions are journaled to disk, so a later `chat` resumes the latest one.
+
+    uv run local-agents serve           # register ./main.py's agent and poll for work
+    uv run local-agents chat            # resume the latest session (or start one)
+    uv run local-agents chat --new      # start a fresh session
+"""
+
+import os
+
+os.environ.setdefault("AGENTS_SDK_EXPERIMENTAL_WARNINGS", "0")
+
+import argparse
+import asyncio
+import sys
+from pathlib import Path
+
+from .client import chat
+from .worker import serve
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    serve_parser = sub.add_parser("serve", help="Register the agent and poll for work.")
+    serve_parser.add_argument("--path", type=Path, default=Path("."))
+    serve_parser.add_argument("--name", default=None)
+
+    chat_parser = sub.add_parser("chat", help="Talk to a served agent.")
+    chat_parser.add_argument("agent", nargs="?", default="bot")
+    chat_parser.add_argument("-m", "--message", default=None)
+    chat_parser.add_argument("--new", action="store_true", help="Start a fresh session.")
+    chat_parser.add_argument("--resume", default=None, help="Resume a specific session by id.")
+    chat_parser.add_argument("--delete", default=None, metavar="SESSION", help="Delete a session by id and exit.")
+
+    args = parser.parse_args()
+    if args.command == "serve":
+        try:
+            asyncio.run(serve(args.path, args.name))
+        except KeyboardInterrupt:
+            pass
+    elif args.command == "chat":
+        sys.exit(chat(args.agent, args.message, args.new, args.resume, args.delete))
+
+
+if __name__ == "__main__":
+    main()

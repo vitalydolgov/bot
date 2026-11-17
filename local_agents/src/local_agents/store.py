@@ -1,0 +1,146 @@
+import json
+import sqlite3
+import time
+import uuid
+from pathlib import Path
+
+BOT_DIR = Path.cwd() / ".bots"
+DB_PATH = BOT_DIR / "local_serve.db"
+JOURNAL_DIR = BOT_DIR / "sessions"
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS agents(
+    name TEXT PRIMARY KEY,
+    project TEXT NOT NULL,
+    created_at REAL NOT NULL
+);
+CREATE TABLE IF NOT EXISTS sessions(
+    id TEXT PRIMARY KEY,
+    agent TEXT NOT NULL,
+    status TEXT NOT NULL,
+    created_at REAL NOT NULL,
+    sdk_id TEXT
+);
+CREATE TABLE IF NOT EXISTS commands(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    payload TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at REAL NOT NULL
+);
+CREATE TABLE IF NOT EXISTS events(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    payload TEXT NOT NULL,
+    created_at REAL NOT NULL
+);
+"""
+
+
+def connect() -> sqlite3.Connection:
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(DB_PATH, timeout=30, isolation_level=None)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.executescript(SCHEMA)
+    columns = {row["name"] for row in conn.execute("PRAGMA table_info(sessions)")}
+    if "sdk_id" not in columns:
+        conn.execute("ALTER TABLE sessions ADD COLUMN sdk_id TEXT")
+    return conn
+
+
+def register_agent(conn: sqlite3.Connection, name: str, project: Path) -> None:
+    conn.execute(
+        "INSERT INTO agents(name, project, created_at) VALUES (?, ?, ?) "
+        "ON CONFLICT(name) DO UPDATE SET project=excluded.project",
+        (name, str(project), time.time()),
+    )
+
+
+def get_agent(conn: sqlite3.Connection, name: str) -> sqlite3.Row | None:
+    return conn.execute("SELECT * FROM agents WHERE name = ?", (name,)).fetchone()
+
+
+def create_session(conn: sqlite3.Connection, agent: str) -> str:
+    session_id = str(uuid.uuid4())
+    conn.execute(
+        "INSERT INTO sessions(id, agent, status, created_at) VALUES (?, ?, 'starting', ?)",
+        (session_id, agent, time.time()),
+    )
+    enqueue(conn, session_id, "start", {})
+    return session_id
+
+
+def find_session(conn: sqlite3.Connection, ref: str) -> sqlite3.Row | None:
+    return conn.execute(
+        "SELECT * FROM sessions WHERE id = ? OR sdk_id = ?", (ref, ref)
+    ).fetchone()
+
+
+def latest_session(conn: sqlite3.Connection, agent: str) -> sqlite3.Row | None:
+    return conn.execute(
+        "SELECT * FROM sessions WHERE agent = ? AND sdk_id IS NOT NULL ORDER BY created_at DESC LIMIT 1",
+        (agent,),
+    ).fetchone()
+
+
+def set_session_status(conn: sqlite3.Connection, session_id: str, status: str) -> None:
+    conn.execute("UPDATE sessions SET status = ? WHERE id = ?", (status, session_id))
+
+
+def enqueue(conn: sqlite3.Connection, session_id: str, kind: str, payload: dict) -> None:
+    conn.execute(
+        "INSERT INTO commands(session_id, kind, payload, created_at) VALUES (?, ?, ?, ?)",
+        (session_id, kind, json.dumps(payload), time.time()),
+    )
+
+
+def claim_command(conn: sqlite3.Connection) -> sqlite3.Row | None:
+    conn.execute("BEGIN IMMEDIATE")
+    row = conn.execute(
+        "SELECT * FROM commands WHERE status = 'pending' ORDER BY id LIMIT 1"
+    ).fetchone()
+    if row is None:
+        conn.execute("COMMIT")
+        return None
+    conn.execute("UPDATE commands SET status = 'running' WHERE id = ?", (row["id"],))
+    conn.execute("COMMIT")
+    return row
+
+
+def finish_command(conn: sqlite3.Connection, command_id: int, status: str) -> None:
+    conn.execute("UPDATE commands SET status = ? WHERE id = ?", (status, command_id))
+
+
+def append_event(conn: sqlite3.Connection, session_id: str, kind: str, payload: str) -> None:
+    conn.execute(
+        "INSERT INTO events(session_id, kind, payload, created_at) VALUES (?, ?, ?, ?)",
+        (session_id, kind, payload, time.time()),
+    )
+
+
+def session_sdk_id(conn: sqlite3.Connection, session_id: str) -> str | None:
+    row = conn.execute("SELECT sdk_id FROM sessions WHERE id = ?", (session_id,)).fetchone()
+    return row["sdk_id"] if row else None
+
+
+def last_event_id(conn: sqlite3.Connection, session_id: str) -> int:
+    row = conn.execute(
+        "SELECT COALESCE(MAX(id), 0) AS last FROM events WHERE session_id = ?", (session_id,)
+    ).fetchone()
+    return row["last"]
+
+
+def delete_session(conn: sqlite3.Connection, session_id: str) -> None:
+    conn.execute("DELETE FROM events WHERE session_id = ?", (session_id,))
+    conn.execute("DELETE FROM commands WHERE session_id = ?", (session_id,))
+    conn.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
+
+
+def read_events(conn: sqlite3.Connection, session_id: str, after_id: int) -> list[sqlite3.Row]:
+    return conn.execute(
+        "SELECT * FROM events WHERE session_id = ? AND id > ? ORDER BY id",
+        (session_id, after_id),
+    ).fetchall()
