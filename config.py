@@ -1,8 +1,24 @@
+import os
+import re
 import tomllib
 from dataclasses import dataclass, fields
 from pathlib import Path
 
-BOT_DIR = Path(__file__).resolve().parent / ".bot"
+BOT_ROOT = Path(__file__).resolve().parent / ".bots"
+PROFILE_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]*")
+
+
+def _load_profile() -> str:
+    profile = os.environ.get("BOT_PROFILE", "default").strip() or "default"
+    if not PROFILE_PATTERN.fullmatch(profile):
+        raise ValueError(
+            f"Invalid BOT_PROFILE {profile!r}: use letters, digits, '-' and '_', starting with a letter or digit."
+        )
+    return profile
+
+
+PROFILE = _load_profile()
+BOT_DIR = BOT_ROOT / PROFILE
 
 
 @dataclass(frozen=True)
@@ -28,8 +44,15 @@ class McpConfig:
 
 
 def _load_config() -> dict:
-    with open(BOT_DIR / "config.toml", "rb") as f:
-        return tomllib.load(f)
+    path = BOT_DIR / "config.toml"
+    try:
+        with open(path, "rb") as f:
+            return tomllib.load(f)
+    except FileNotFoundError:
+        raise ValueError(
+            f"No configuration for profile {PROFILE!r}: {path} does not exist. "
+            "Create it, or set BOT_PROFILE to an existing profile."
+        ) from None
 
 
 def _load_agent_config(data: dict) -> AgentConfig:

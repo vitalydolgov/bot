@@ -1,6 +1,6 @@
 # Configuration
 
-The bot reads its configuration from `.bot/config.toml` at startup. The file has two kinds of tables: one `[agent]` table for the model endpoint, and one `[mcp.<name>]` table per MCP server.
+The bot reads its configuration from `.bots/<profile>/config.toml` at startup, where `<profile>` is the `BOT_PROFILE` environment variable (`default` when unset; it may also be set in `.env`). The file has two kinds of tables: one `[agent]` table for the model endpoint, and one `[mcp.<name>]` table per MCP server.
 
 ## `[agent]`
 

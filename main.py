@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from config import BOT_DIR, CONFIG
+from config import BOT_DIR, CONFIG, PROFILE
 from mcp_servers import load_mcps
 from modalities import detect_input_modalities
 from memory import MEMORY_TOOLS, memory_instructions
@@ -29,7 +29,7 @@ modalities = CONFIG.input_modalities or detect_input_modalities(CONFIG.base_url,
 instructions = "\n\n".join(part for part in (modality_instructions(modalities), memory_instructions()) if part)
 
 agent = agents.Agent(
-    name="bot",
+    name=PROFILE,
     model=CONFIG.model,
     instructions=instructions,
     tools=MEMORY_TOOLS,

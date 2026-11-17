@@ -26,9 +26,19 @@ uv sync
 
 This creates a virtual environment in `.venv` and installs the project dependencies.
 
+## Profiles
+
+Each bot runs as a profile with its own workspace, configuration, memory and skills, stored under `.bots/<profile>/`. The `default` profile is used when nothing else is selected; pick another with the `BOT_PROFILE` environment variable, either per command or in `.env`:
+
+```sh
+BOT_PROFILE=anotherbot uv run agents chat
+```
+
+A profile directory holds `config.toml`, `MEMORY.md`, `skills/` and `workspace/`. The agent's registered name is the profile name. To create a profile, make `.bots/<name>/` with a `config.toml`; the rest is created on first use.
+
 ## Configuration
 
-The bot is configured through `.bot/config.toml` — the model endpoint and any MCP servers. See [docs/config.md](docs/config.md) for the full format.
+The bot is configured through `.bots/<profile>/config.toml` — the model endpoint and any MCP servers. See [docs/config.md](docs/config.md) for the full format.
 
 ### Environment
 
@@ -36,7 +46,7 @@ Set these in a `.env` file in the project root (or in the environment). Variable
 
 - `MISTRAL_API_KEY` — authenticates with Mistral, needed to serve the agent and to talk to it through the Session API.
 - `ALLOW_DANGEROUS_LOCAL_HOST` — set to `1` to let the agent run commands directly on your machine.
-- Any variables referenced by `auth_header_env_vars` of the MCP servers in `.bot/config.toml`.
+- Any variables referenced by `auth_header_env_vars` of the MCP servers in `.bots/<profile>/config.toml`.
 
 ## Run
 
@@ -47,6 +57,8 @@ Local — the agent runs in this process, nothing is registered with Mistral, an
 ```sh
 uv run agents chat
 ```
+
+Set `BOT_PROFILE` to run a different profile (see Profiles).
 
 Remote — the agent is registered in your Mistral workspace and runs on your machine as a worker, giving you a hosted chat link. It sends the agent's configuration to Mistral (pass `--no-send-config` to skip that) and polls Mistral's task queue over an outbound connection, so no inbound ports are opened. Stop it with Ctrl+C; the agent stays registered but receives no sessions until you serve it again:
 
