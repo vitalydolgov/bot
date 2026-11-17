@@ -35,7 +35,7 @@ modalities = CONFIG.input_modalities or detect_input_modalities(CONFIG.base_url,
 instructions = "\n\n".join(part for part in (modality_instructions(modalities), memory_instructions()) if part)
 
 agent = agents.Agent(
-    name=PROFILE,
+    name=PROFILE or "bot",
     model=CONFIG.model,
     instructions=instructions,
     tools=[*MEMORY_TOOLS, *READ_IMAGE_TOOLS],

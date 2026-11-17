@@ -3,7 +3,7 @@
 The bot reads its configuration from two files at startup:
 
 1. `.bots/config.toml` — the common config, shared by all profiles.
-2. `.bots/<profile>/config.toml` — the profile config, where `<profile>` is the `BOT_PROFILE` environment variable (`default` when unset; it may also be set in `.env`).
+2. `.bots/<profile>/config.toml` — the profile config, where `<profile>` is the `BOT_PROFILE` environment variable (it may also be set in `.env`). Read only when `BOT_PROFILE` is set; otherwise only the common config is read.
 
 A profile table replaces the common table of the same name entirely.
 
@@ -14,11 +14,11 @@ Both files use the same format. A config file may contain these top-level tables
 - `[agent]` — the model endpoint; see below.
 - `[mcp.<name>]` — a remote MCP server the agent can call tools on; repeatable, see below.
 
-Either file may be absent; the model endpoint must be configured in at least one of them.
+The common file may be absent; the profile file is read only when `BOT_PROFILE` is set. The model endpoint must be configured in at least one of the files that are read.
 
 ## `[agent]`
 
-Configures the model the agent calls. It can be set in either file; the common `[agent]` provides defaults for every profile, and a profile `[agent]` replaces it entirely.
+Configures the model the agent calls. It can be set in either file; the common `[agent]` provides defaults for every bot, and a profile `[agent]` replaces it entirely.
 
 | Key | Type | Description |
 | --- | --- | --- |

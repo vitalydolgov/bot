@@ -4,9 +4,9 @@ from typing import Annotated
 from mistralai import agents
 from pydantic import Field
 
-from config import BOT_DIR
+from config import BOT_DIR, BOT_ROOT
 
-MEMORY_PATH = BOT_DIR / "MEMORY.md"
+MEMORY_PATH = (BOT_DIR or BOT_ROOT) / "MEMORY.md"
 PROMPT_PATH = Path(__file__).resolve().parent.parent / "instructions" / "prompts" / "memory.md"
 
 

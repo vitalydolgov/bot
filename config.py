@@ -9,8 +9,10 @@ COMMON_CONFIG_PATH = BOT_ROOT / "config.toml"
 PROFILE_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]*")
 
 
-def _load_profile() -> str:
-    profile = os.environ.get("BOT_PROFILE", "default").strip() or "default"
+def _load_profile() -> str | None:
+    profile = os.environ.get("BOT_PROFILE", "").strip()
+    if not profile:
+        return None
     if not PROFILE_PATTERN.fullmatch(profile):
         raise ValueError(
             f"Invalid BOT_PROFILE {profile!r}: use letters, digits, '-' and '_', starting with a letter or digit."
@@ -19,7 +21,7 @@ def _load_profile() -> str:
 
 
 PROFILE = _load_profile()
-BOT_DIR = BOT_ROOT / PROFILE
+BOT_DIR = BOT_ROOT / PROFILE if PROFILE is not None else None
 WORKSPACE_DIR = BOT_ROOT / "workspace"
 
 
@@ -61,6 +63,8 @@ def _check_top_level(data: dict, source: Path) -> dict:
 
 
 def _load_config() -> dict:
+    if BOT_DIR is None:
+        return {}
     path = BOT_DIR / "config.toml"
     try:
         return _check_top_level(_load_toml(path), path)
@@ -94,9 +98,14 @@ def _load_agent_config(common: dict | None, profile: dict | None) -> AgentConfig
     elif common is not None:
         raw, source = common, COMMON_CONFIG_PATH
     else:
+        if BOT_DIR is not None:
+            raise ValueError(
+                f"No [agent] table in {COMMON_CONFIG_PATH} or {BOT_DIR / 'config.toml'}: "
+                "configure the model endpoint in one of them"
+            )
         raise ValueError(
-            f"No [agent] table in {COMMON_CONFIG_PATH} or {BOT_DIR / 'config.toml'}: "
-            "configure the model endpoint in one of them"
+            f"BOT_PROFILE is unset and {COMMON_CONFIG_PATH} has no [agent] table: "
+            "configure the model endpoint in the common config or set BOT_PROFILE"
         )
     missing = [
         field.name
@@ -126,14 +135,15 @@ def _load_mcp_configs(data: dict, source: Path) -> dict[str, McpConfig]:
     return servers
 
 
+_PROFILE_CONFIG_PATH = BOT_DIR / "config.toml" if BOT_DIR is not None else None
 _COMMON = _load_common_config()
 _DATA = _load_config()
 CONFIG = _load_agent_config(
     _load_agent_raw(_COMMON, COMMON_CONFIG_PATH),
-    _load_agent_raw(_DATA, BOT_DIR / "config.toml"),
+    _load_agent_raw(_DATA, _PROFILE_CONFIG_PATH) if _PROFILE_CONFIG_PATH is not None else None,
 )
 MCP_SERVERS = {
     "chrome": McpConfig(url="http://127.0.0.1:8080/mcp"),
     **_load_mcp_configs(_COMMON, COMMON_CONFIG_PATH),
-    **_load_mcp_configs(_DATA, BOT_DIR / "config.toml"),
+    **(_load_mcp_configs(_DATA, _PROFILE_CONFIG_PATH) if _PROFILE_CONFIG_PATH is not None else {}),
 }
