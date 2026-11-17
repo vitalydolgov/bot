@@ -7,9 +7,9 @@ load_dotenv()
 from config import CONFIG, PROFILE, WORKSPACE_DIR
 from mcp_servers import load_mcps
 from modalities import detect_input_modalities
-from memory import MEMORY_TOOLS, memory_instructions
+from tools.memory import MEMORY_TOOLS, memory_instructions
 from patches.mistralai import apply_sdk_patches
-from read_image import READ_IMAGE_TOOLS
+from tools.read_image import READ_IMAGE_TOOLS
 from mistralai import agents
 from mistralai.vibe.harness.runtime.completion.providers.openai import OpenAICompletionConfig
 from skills import seed_skills

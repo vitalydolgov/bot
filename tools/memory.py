@@ -7,7 +7,7 @@ from pydantic import Field
 from config import BOT_DIR
 
 MEMORY_PATH = BOT_DIR / "MEMORY.md"
-PROMPT_PATH = Path(__file__).resolve().parent / "instructions" / "prompts" / "memory.md"
+PROMPT_PATH = Path(__file__).resolve().parent.parent / "instructions" / "prompts" / "memory.md"
 
 
 def read_memory_text() -> str:
