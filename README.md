@@ -1,6 +1,6 @@
-# Bot
+# Bots
 
-A framework for creating specialized bots built on the Mistral Agents SDK. It provides a shared foundation for defining, configuring, and running purpose-built agents, so each bot can focus on its own domain and behavior.
+A framework for creating specialized bots built on the Mistral Agents SDK. It provides a shared foundation for defining, configuring, and running purpose-built agents, so each bot can focus on its own domain and behavior. Each bot runs as a profile with its own configuration and memory, layered on top of a common setup shared by all profiles.
 
 ## Features
 
