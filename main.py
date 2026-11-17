@@ -1,3 +1,4 @@
+import subprocess
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -17,6 +18,9 @@ from skills import seed_skills
 seed_skills()
 
 apply_sdk_patches()
+
+CHROME_SCRIPT = Path(__file__).resolve().parent / "scripts" / "start-chrome.sh"
+subprocess.run(["bash", str(CHROME_SCRIPT), str(WORKSPACE_DIR)], check=False, timeout=75)
 
 PROMPTS_DIR = Path(__file__).resolve().parent / "instructions" / "prompts"
 MODALITY_PROMPTS = {"image": PROMPTS_DIR / "vision.md"}
