@@ -4,13 +4,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from config import BOT_DIR, CONFIG, PROFILE
+from config import CONFIG, PROFILE, WORKSPACE_DIR
 from mcp_servers import load_mcps
 from modalities import detect_input_modalities
 from memory import MEMORY_TOOLS, memory_instructions
 from mistralai import agents
 from mistralai.vibe.harness.runtime.completion.providers.openai import OpenAICompletionConfig
-from skills import load_skills
+from skills import seed_skills
+
+seed_skills()
 
 PROMPTS_DIR = Path(__file__).resolve().parent / "instructions" / "prompts"
 MODALITY_PROMPTS = {"image": PROMPTS_DIR / "vision.md"}
@@ -33,8 +35,8 @@ agent = agents.Agent(
     model=CONFIG.model,
     instructions=instructions,
     tools=MEMORY_TOOLS,
-    environment=agents.DangerousLocalSandbox(workspace=str(BOT_DIR / "workspace")),
-    skills=[*load_skills(), agents.SandboxWorkspaceSkills()],
+    environment=agents.DangerousLocalSandbox(workspace=str(WORKSPACE_DIR)),
+    skills=[agents.SandboxWorkspaceSkills()],
     mcps=load_mcps() or None,
     completion=OpenAICompletionConfig(
         model=CONFIG.model,

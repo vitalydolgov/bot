@@ -28,13 +28,13 @@ This creates a virtual environment in `.venv` and installs the project dependenc
 
 ## Profiles
 
-Each bot runs as a profile with its own workspace, configuration, memory and skills, stored under `.bots/<profile>/`. The `default` profile is used when nothing else is selected; pick another with the `BOT_PROFILE` environment variable, either per command or in `.env`:
+Each bot runs as a profile with its own configuration and memory, stored under `.bots/<profile>/`. The workspace and skills are shared by all profiles and stored under `.bots/workspace/`. The `default` profile is used when nothing else is selected; pick another with the `BOT_PROFILE` environment variable, either per command or in `.env`:
 
 ```sh
 BOT_PROFILE=anotherbot uv run agents chat
 ```
 
-A profile directory holds `config.toml`, `MEMORY.md`, `skills/` and `workspace/`. The agent's registered name is the profile name. To create a profile, make `.bots/<name>/` with a `config.toml`; the rest is created on first use.
+A profile directory holds `config.toml` and `MEMORY.md`. The agent's registered name is the profile name. To create a profile, make `.bots/<name>/` with a `config.toml`; the rest is created on first use. The shared workspace lives in `.bots/workspace/`; skills live in `.bots/workspace/.agents/skills/`, seeded from the built-in skills on first use.
 
 ## Configuration
 

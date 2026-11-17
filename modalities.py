@@ -4,12 +4,12 @@ import os
 import sys
 import zlib
 import struct
-from pathlib import Path
 
 import httpx
 
-BOT_DIR = Path(__file__).resolve().parent / ".bot"
-CACHE_PATH = BOT_DIR / "cache.json"
+from config import BOT_ROOT
+
+CACHE_PATH = BOT_ROOT / "cache.json"
 PROBE_TIMEOUT_SECONDS = 10.0
 
 

@@ -19,6 +19,7 @@ def _load_profile() -> str:
 
 PROFILE = _load_profile()
 BOT_DIR = BOT_ROOT / PROFILE
+WORKSPACE_DIR = BOT_ROOT / "workspace"
 
 
 @dataclass(frozen=True)
