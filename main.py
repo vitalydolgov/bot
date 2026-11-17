@@ -12,13 +12,26 @@ from mistralai import agents
 from mistralai.vibe.harness.runtime.completion.providers.openai import OpenAICompletionConfig
 from skills import load_skills
 
-INTRO_PATH = Path(__file__).resolve().parent / "instructions" / "prompts" / "intro.md"
-intro = INTRO_PATH.read_text(encoding="utf-8").strip()
+PROMPTS_DIR = Path(__file__).resolve().parent / "instructions" / "prompts"
+MODALITY_PROMPTS = {"image": PROMPTS_DIR / "vision.md"}
+
+
+def modality_instructions(modalities: list[str]) -> str:
+    parts = []
+    for modality in modalities:
+        path = MODALITY_PROMPTS.get(modality)
+        if path is not None:
+            parts.append(path.read_text(encoding="utf-8").strip())
+    return "\n\n".join(parts)
+
+
+modalities = CONFIG.input_modalities or detect_input_modalities(CONFIG.base_url, CONFIG.model, CONFIG.api_key_env_var)
+instructions = "\n\n".join(part for part in (modality_instructions(modalities), memory_instructions()) if part)
 
 agent = agents.Agent(
     name="bot",
     model=CONFIG.model,
-    instructions=f"{intro}\n\n{memory_instructions()}",
+    instructions=instructions,
     tools=MEMORY_TOOLS,
     environment=agents.DangerousLocalSandbox(workspace=str(BOT_DIR / "workspace")),
     skills=[*load_skills(), agents.SandboxWorkspaceSkills()],
@@ -28,7 +41,6 @@ agent = agents.Agent(
         api_key_env_var=CONFIG.api_key_env_var,
         base_url=CONFIG.base_url,
         context_window=CONFIG.context_window,
-        input_modalities=CONFIG.input_modalities
-        or detect_input_modalities(CONFIG.base_url, CONFIG.model, CONFIG.api_key_env_var),
+        input_modalities=modalities,
     ),
 )
