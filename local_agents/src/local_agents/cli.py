@@ -10,6 +10,7 @@ Sessions are journaled to disk, so a later `chat` resumes the latest one.
     uv run local-agents serve --profile grad   # serve only grad
     uv run local-agents chat            # resume the latest session (or start one)
     uv run local-agents chat --new      # start a fresh session
+    uv run local-agents webui           # serve a web client for a served agent
 """
 
 import os
@@ -22,6 +23,7 @@ import sys
 from pathlib import Path
 
 from .client import chat
+from .webui import webui
 from .worker import serve
 
 
@@ -40,6 +42,12 @@ def main() -> None:
     chat_parser.add_argument("--resume", default=None, help="Resume a specific session by id.")
     chat_parser.add_argument("--delete", default=None, metavar="SESSION", help="Delete a session by id and exit.")
 
+    webui_parser = sub.add_parser("webui", help="Serve a web client for a served agent.")
+    webui_parser.add_argument("agent", nargs="?", default="bot")
+    webui_parser.add_argument("--port", type=int, default=8000)
+    webui_parser.add_argument("--new", action="store_true", help="Start a fresh session.")
+    webui_parser.add_argument("--resume", default=None, help="Resume a specific session by id.")
+
     args = parser.parse_args()
     if args.command == "serve":
         try:
@@ -48,6 +56,8 @@ def main() -> None:
             pass
     elif args.command == "chat":
         sys.exit(chat(args.agent, args.message, args.new, args.resume, args.delete))
+    elif args.command == "webui":
+        sys.exit(webui(args.agent, args.port, args.new, args.resume))
 
 
 if __name__ == "__main__":
