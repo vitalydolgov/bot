@@ -38,7 +38,12 @@ A profile directory holds `config.toml` and `MEMORY.md`. The agent's registered 
 
 ## Configuration
 
-The bot is configured through `.bots/<profile>/config.toml` — the model endpoint and any MCP servers. See [docs/config.md](docs/config.md) for the full format.
+Configuration has two levels:
+
+- Common — `.bots/config.toml`, common to all profiles. Holds the default model endpoint and MCP servers shared by every bot.
+- Profile — `.bots/<profile>/config.toml`, where `<profile>` is the `BOT_PROFILE` environment variable (`default` when unset). Holds the model endpoint (replacing the common one entirely) and any profile-specific MCP servers; a profile MCP server with the same name as a common one replaces it.
+
+See [docs/config.md](docs/config.md) for the full format.
 
 ### Environment
 
@@ -46,7 +51,7 @@ Set these in a `.env` file in the project root (or in the environment). Variable
 
 - `MISTRAL_API_KEY` — authenticates with Mistral, needed to serve the agent and to talk to it through the Session API.
 - `ALLOW_DANGEROUS_LOCAL_HOST` — set to `1` to let the agent run commands directly on your machine.
-- Any variables referenced by `auth_header_env_vars` of the MCP servers in `.bots/<profile>/config.toml`.
+- Any variables referenced by `auth_header_env_vars` of the MCP servers in `.bots/config.toml` or `.bots/<profile>/config.toml`.
 
 ## Run
 

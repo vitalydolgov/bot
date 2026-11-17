@@ -1,10 +1,24 @@
 # Configuration
 
-The bot reads its configuration from `.bots/<profile>/config.toml` at startup, where `<profile>` is the `BOT_PROFILE` environment variable (`default` when unset; it may also be set in `.env`). The file has two kinds of tables: one `[agent]` table for the model endpoint, and one `[mcp.<name>]` table per MCP server.
+The bot reads its configuration from two files at startup:
+
+1. `.bots/config.toml` — the common config, shared by all profiles.
+2. `.bots/<profile>/config.toml` — the profile config, where `<profile>` is the `BOT_PROFILE` environment variable (`default` when unset; it may also be set in `.env`).
+
+A profile table replaces the common table of the same name entirely.
+
+## Schema
+
+Both files use the same format. A config file may contain these top-level tables and nothing else:
+
+- `[agent]` — the model endpoint; see below.
+- `[mcp.<name>]` — a remote MCP server the agent can call tools on; repeatable, see below.
+
+Either file may be absent; the model endpoint must be configured in at least one of them.
 
 ## `[agent]`
 
-Required. Configures the model the agent calls.
+Configures the model the agent calls. It can be set in either file; the common `[agent]` provides defaults for every profile, and a profile `[agent]` replaces it entirely.
 
 | Key | Type | Description |
 | --- | --- | --- |
@@ -26,7 +40,7 @@ api_key_env_var = "NVIDIA_API_KEY"
 
 ## `[mcp.<name>]`
 
-Optional, repeatable. Declares a remote MCP server the agent can call tools on. Only HTTP(S) servers are supported. The `<name>` you choose becomes the namespace of the server's tools — a tool `create_issue` on `[mcp.github]` is exposed to the model as `github.create_issue` — and also defaults the server's ID and display name. Two servers may not share a namespace.
+Repeatable, in either config file. Declares a remote MCP server the agent can call tools on. Only HTTP(S) servers are supported. The `<name>` you choose becomes the namespace of the server's tools — a tool `create_issue` on `[mcp.github]` is exposed to the model as `github.create_issue` — and also defaults the server's ID and display name. Two servers may not share a namespace.
 
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -54,7 +68,7 @@ With `GITHUB_MCP_TOKEN=Bearer ghp_...` in `.env`, every request to the server ca
 
 ## Built-in `chrome` server
 
-The bot ships with a built-in `chrome` MCP server pointing at `http://127.0.0.1:8080/mcp`, so no declaration is needed for the default endpoint. To use a different endpoint, declare `[mcp.chrome]` with your own `url`; it replaces the built-in default. All other `[mcp.chrome]` keys are honored as usual.
+The bot ships with a built-in `chrome` MCP server pointing at `http://127.0.0.1:8080/mcp`, so no declaration is needed for the default endpoint. To use a different endpoint, declare `[mcp.chrome]` with your own `url` in either config file; it replaces the built-in default. All other `[mcp.chrome]` keys are honored as usual.
 
 ```toml
 [mcp.chrome]

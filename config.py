@@ -1,10 +1,11 @@
 import os
 import re
 import tomllib
-from dataclasses import dataclass, fields
+from dataclasses import MISSING, dataclass, fields
 from pathlib import Path
 
 BOT_ROOT = Path(__file__).resolve().parent / ".bots"
+COMMON_CONFIG_PATH = BOT_ROOT / "config.toml"
 PROFILE_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]*")
 
 
@@ -44,37 +45,95 @@ class McpConfig:
     name: str | None = None
 
 
+def _load_toml(path: Path) -> dict:
+    with open(path, "rb") as f:
+        return tomllib.load(f)
+
+
+def _check_top_level(data: dict, source: Path) -> dict:
+    extra = sorted(set(data) - {"agent", "mcp"})
+    if extra:
+        raise ValueError(
+            f"{source}: unexpected tables: {', '.join(extra)}; "
+            "only [agent] and [mcp.<name>] tables are allowed"
+        )
+    return data
+
+
 def _load_config() -> dict:
     path = BOT_DIR / "config.toml"
     try:
-        with open(path, "rb") as f:
-            return tomllib.load(f)
+        return _check_top_level(_load_toml(path), path)
     except FileNotFoundError:
+        return {}
+
+
+def _load_common_config() -> dict:
+    try:
+        return _check_top_level(_load_toml(COMMON_CONFIG_PATH), COMMON_CONFIG_PATH)
+    except FileNotFoundError:
+        return {}
+
+
+def _load_agent_raw(data: dict, source: Path) -> dict | None:
+    raw = data.get("agent")
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        raise ValueError(f"{source}: [agent] must be a table")
+    known = {field.name for field in fields(AgentConfig)}
+    unknown = sorted(set(raw) - known)
+    if unknown:
+        raise ValueError(f"{source}: [agent] has unknown keys: {', '.join(unknown)}")
+    return raw
+
+
+def _load_agent_config(common: dict | None, profile: dict | None) -> AgentConfig:
+    if profile is not None:
+        raw, source = profile, BOT_DIR / "config.toml"
+    elif common is not None:
+        raw, source = common, COMMON_CONFIG_PATH
+    else:
         raise ValueError(
-            f"No configuration for profile {PROFILE!r}: {path} does not exist. "
-            "Create it, or set BOT_PROFILE to an existing profile."
-        ) from None
+            f"No [agent] table in {COMMON_CONFIG_PATH} or {BOT_DIR / 'config.toml'}: "
+            "configure the model endpoint in one of them"
+        )
+    missing = [
+        field.name
+        for field in fields(AgentConfig)
+        if field.default is MISSING and field.name not in raw
+    ]
+    if missing:
+        raise ValueError(f"{source}: [agent] is missing required keys: {', '.join(missing)}")
+    return AgentConfig(**raw)
 
 
-def _load_agent_config(data: dict) -> AgentConfig:
-    return AgentConfig(**data["agent"])
-
-
-def _load_mcp_configs(data: dict) -> dict[str, McpConfig]:
+def _load_mcp_configs(data: dict, source: Path) -> dict[str, McpConfig]:
     known = {field.name for field in fields(McpConfig)}
     servers: dict[str, McpConfig] = {}
-    for name, raw in data.get("mcp", {}).items():
+    raw_servers = data.get("mcp", {})
+    if not isinstance(raw_servers, dict):
+        raise ValueError(f"{source}: [mcp] must be a table")
+    for name, raw in raw_servers.items():
         if not isinstance(raw, dict):
-            raise ValueError(f"[mcp.{name}] must be a table")
+            raise ValueError(f"{source}: [mcp.{name}] must be a table")
         unknown = sorted(set(raw) - known)
         if unknown:
-            raise ValueError(f"[mcp.{name}] has unknown keys: {', '.join(unknown)}")
+            raise ValueError(f"{source}: [mcp.{name}] has unknown keys: {', '.join(unknown)}")
         if "url" not in raw:
-            raise ValueError(f"[mcp.{name}] is missing the required 'url' key")
+            raise ValueError(f"{source}: [mcp.{name}] is missing the required 'url' key")
         servers[name] = McpConfig(**raw)
     return servers
 
 
+_COMMON = _load_common_config()
 _DATA = _load_config()
-CONFIG = _load_agent_config(_DATA)
-MCP_SERVERS = {"chrome": McpConfig(url="http://127.0.0.1:8080/mcp"), **_load_mcp_configs(_DATA)}
+CONFIG = _load_agent_config(
+    _load_agent_raw(_COMMON, COMMON_CONFIG_PATH),
+    _load_agent_raw(_DATA, BOT_DIR / "config.toml"),
+)
+MCP_SERVERS = {
+    "chrome": McpConfig(url="http://127.0.0.1:8080/mcp"),
+    **_load_mcp_configs(_COMMON, COMMON_CONFIG_PATH),
+    **_load_mcp_configs(_DATA, BOT_DIR / "config.toml"),
+}

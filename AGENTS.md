@@ -12,3 +12,4 @@
 - Write instructions in your own words rather than quoting the user verbatim.
 - Do not state what is gitignored; `.gitignore` is the source of truth.
 - Do not explain how the system works by pointing at files; describe the behavior directly.
+- Use bullets or a numbered list instead of a paragraph when describing multiple items or a sequence.
