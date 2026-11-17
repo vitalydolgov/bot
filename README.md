@@ -81,16 +81,16 @@ Session persists remotely — the agent is registered in your Mistral workspace 
 uv run agents serve
 ```
 
-### Local worker
+### Local WebUI
 
-Local chat with persistence — experimental. Like Remote, but without Mistral: a worker polls a local SQLite store instead of Mistral's task queue, and sessions are journaled to disk so they survive restarts. Nothing is registered with Mistral and the Session API is not used, so only the model endpoint key is needed. Run the worker in one terminal and chat in another:
+Local web client with persistence — experimental. Like Remote, but without Mistral. Run the worker in one terminal and the web client in another:
 
 ```sh
 uv run local-agents serve
 uv run local-agents chat
 ```
 
-`serve` registers every profile it finds in `.bots/profiles/` (the common config as `bot`, plus each `.bots/profiles/<profile>/config.toml` as `<profile>`) and serves them all in one process. Pass the profile name to `chat` (e.g. `uv run local-agents chat grad`). Use `--profile` to serve a single profile. See [docs/local_agents.md](docs/local_agents.md) for details.
+See [docs/local_agents.md](docs/local_agents.md) for details.
 
 ## Smoke test
 
