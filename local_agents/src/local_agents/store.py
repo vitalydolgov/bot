@@ -4,7 +4,7 @@ import time
 import uuid
 from pathlib import Path
 
-BOT_DIR = Path.cwd() / ".bots"
+BOT_DIR = Path.home() / ".bots"
 DB_PATH = BOT_DIR / "local_serve.db"
 JOURNAL_DIR = BOT_DIR / "sessions"
 

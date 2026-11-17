@@ -4,7 +4,7 @@ import tomllib
 from dataclasses import MISSING, dataclass, fields
 from pathlib import Path
 
-BOT_ROOT = Path(__file__).resolve().parent / ".bots"
+BOT_ROOT = Path.home() / ".bots"
 COMMON_CONFIG_PATH = BOT_ROOT / "config.toml"
 PROFILE_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]*")
 

@@ -6,7 +6,7 @@ same shape without the service: a SQLite file holds the agent registry, the
 sessions, the command queue and the event log, and the worker polls it.
 Sessions are journaled to disk, so a later `chat` resumes the latest one.
 
-    uv run local-agents serve           # register every profile found in .bots/profiles/ and poll for work
+    uv run local-agents serve           # register every profile found in ~/.bots/profiles/ and poll for work
     uv run local-agents serve --profile grad   # serve only grad
     uv run local-agents chat            # serve a web client at http://127.0.0.1:8000/
     uv run local-agents chat --new      # start a fresh session

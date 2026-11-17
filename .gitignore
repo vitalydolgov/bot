@@ -15,6 +15,3 @@ wheels/
 
 # Environment secrets
 .env
-
-# Bot configuration
-.bots/

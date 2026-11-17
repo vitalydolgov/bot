@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 from .store import (
+    BOT_DIR,
     DB_PATH,
     JOURNAL_DIR,
     append_event,
@@ -22,8 +23,8 @@ POLL_SECONDS = 0.5
 PROFILE_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]*")
 
 
-def discover_profiles(project: Path) -> list[str | None]:
-    bots = project / ".bots"
+def discover_profiles() -> list[str | None]:
+    bots = BOT_DIR
     profiles: list[str | None] = []
     if (bots / "config.toml").is_file():
         profiles.append(None)
@@ -195,11 +196,11 @@ async def serve(project: Path, profile: str | None) -> None:
     elif env_profile is not None:
         selected = [env_profile]
     else:
-        selected = discover_profiles(project)
+        selected = discover_profiles()
         if not selected:
             raise SystemExit(
-                f"No profiles found in {project / '.bots'}: "
-                "add a config.toml to .bots/ or .bots/profiles/<profile>/"
+                f"No profiles found in {BOT_DIR}: "
+                f"add a config.toml to {BOT_DIR}/config.toml or {BOT_DIR}/profiles/<profile>/"
             )
 
     original_profile = os.environ.get("BOT_PROFILE")

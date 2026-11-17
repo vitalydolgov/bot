@@ -28,10 +28,10 @@ This creates a virtual environment in `.venv` and installs the project dependenc
 
 ## Profiles
 
-Each bot can run as a profile with its own configuration and memory, stored under `.bots/profiles/<profile>/`. The workspace and skills are shared by all profiles and stored under `.bots/workspace/`. With `BOT_PROFILE` unset, the bot runs with no profile:
+Each bot can run as a profile with its own configuration and memory, stored under `~/.bots/profiles/<profile>/`. The workspace and skills are shared by all profiles and stored under `~/.bots/workspace/`. With `BOT_PROFILE` unset, the bot runs with no profile:
 
-- It reads only the common config, `.bots/config.toml`.
-- It uses a shared memory file at `.bots/MEMORY.md`.
+- It reads only the common config, `~/.bots/config.toml`.
+- It uses a shared memory file at `~/.bots/MEMORY.md`.
 - It registers under the agent name `bot`.
 
 Set `BOT_PROFILE`, either per command or in `.env`, to run a profile instead:
@@ -40,14 +40,14 @@ Set `BOT_PROFILE`, either per command or in `.env`, to run a profile instead:
 BOT_PROFILE=anotherbot uv run agents chat
 ```
 
-A profile directory holds `config.toml` and `MEMORY.md`. The agent's registered name is the profile name. To create a profile, make `.bots/profiles/<name>/` with a `config.toml`; the rest is created on first use. The shared workspace lives in `.bots/workspace/`; skills live in `.bots/workspace/.agents/skills/`, seeded from the built-in skills on first use.
+A profile directory holds `config.toml` and `MEMORY.md`. The agent's registered name is the profile name. To create a profile, make `~/.bots/profiles/<name>/` with a `config.toml`; the rest is created on first use. The shared workspace lives in `~/.bots/workspace/`; skills live in `~/.bots/workspace/.agents/skills/`, seeded from the built-in skills on first use.
 
 ## Configuration
 
 Configuration has two levels:
 
-- Common — `.bots/config.toml`, common to all profiles. Holds the default model endpoint and MCP servers shared by every bot.
-- Profile — `.bots/profiles/<profile>/config.toml`, where `<profile>` is the `BOT_PROFILE` environment variable. Holds the model endpoint (replacing the common one entirely) and any profile-specific MCP servers; a profile MCP server with the same name as a common one replaces it. Read only when `BOT_PROFILE` is set; otherwise only the common config is read.
+- Common — `~/.bots/config.toml`, common to all profiles. Holds the default model endpoint and MCP servers shared by every bot.
+- Profile — `~/.bots/profiles/<profile>/config.toml`, where `<profile>` is the `BOT_PROFILE` environment variable. Holds the model endpoint (replacing the common one entirely) and any profile-specific MCP servers; a profile MCP server with the same name as a common one replaces it. Read only when `BOT_PROFILE` is set; otherwise only the common config is read.
 
 See [docs/config.md](docs/config.md) for the full format.
 
@@ -57,7 +57,7 @@ Set these in a `.env` file in the project root (or in the environment). Variable
 
 - `MISTRAL_API_KEY` — authenticates with Mistral, needed to serve the agent and to talk to it through the Session API.
 - `ALLOW_DANGEROUS_LOCAL_HOST` — set to `1` to let the agent run commands directly on your machine.
-- Any variables referenced by `auth_header_env_vars` of the MCP servers in `.bots/config.toml` and, when `BOT_PROFILE` is set, `.bots/profiles/<profile>/config.toml`.
+- Any variables referenced by `auth_header_env_vars` of the MCP servers in `~/.bots/config.toml` and, when `BOT_PROFILE` is set, `~/.bots/profiles/<profile>/config.toml`.
 
 ## Run
 

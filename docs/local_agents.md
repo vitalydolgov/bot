@@ -1,11 +1,11 @@
 # Local agents
 
-`local-agents` is an experimental local stand-in for `agents serve` and `agents chat`. The hosted commands register the agent with Mistral's control plane and poll its task queue; sessions and their events live on the service. `local-agents` keeps the same shape without the service: a local store holds the agent registry, the sessions, a command queue and an event log, and a worker polls it. Nothing is registered with Mistral and the Session API is not used, so only the model endpoint key from `.bots/config.toml` is needed.
+`local-agents` is an experimental local stand-in for `agents serve` and `agents chat`. The hosted commands register the agent with Mistral's control plane and poll its task queue; sessions and their events live on the service. `local-agents` keeps the same shape without the service: a local store holds the agent registry, the sessions, a command queue and an event log, and a worker polls it. Nothing is registered with Mistral and the Session API is not used, so only the model endpoint key from `~/.bots/config.toml` is needed.
 
 ## Commands
 
 ```sh
-uv run local-agents serve                  # register every profile found in .bots/profiles/ and poll for work
+uv run local-agents serve                  # register every profile found in ~/.bots/profiles/ and poll for work
 uv run local-agents serve --profile grad   # serve only grad
 uv run local-agents chat                   # serve a web client at http://127.0.0.1:8000/
 uv run local-agents chat --new             # start a fresh session
@@ -15,8 +15,8 @@ uv run local-agents chat --new             # start a fresh session
 
 Discovers the profiles to serve and loads each from `./main.py` (override with `--path`):
 
-- The common config `.bots/config.toml`, served as `bot`.
-- Every `.bots/profiles/<profile>/config.toml`, served as `<profile>`.
+- The common config `~/.bots/config.toml`, served as `bot`.
+- Every `~/.bots/profiles/<profile>/config.toml`, served as `<profile>`.
 
 Each profile gets its own configuration and memory. A profile that fails to load is skipped with an error; the rest are served. Stop it with Ctrl+C. The agents stay registered but receive no sessions until you serve them again.
 
@@ -51,10 +51,10 @@ Each session has two ids; `--resume` accepts either.
 
 ## State
 
-All state lives under `.bots/`:
+All state lives under `~/.bots/`:
 
-- `.bots/local_serve.db` — the store.
-- `.bots/sessions/` — session journals.
+- `~/.bots/local_serve.db` — the store.
+- `~/.bots/sessions/` — session journals.
 
 Deleting both resets all local state.
 
