@@ -138,6 +138,15 @@ def session_sdk_id(conn: sqlite3.Connection, session_id: str) -> str | None:
     return row["sdk_id"] if row else None
 
 
+def is_turn_running(conn: sqlite3.Connection, session_id: str) -> bool:
+    row = conn.execute(
+        "SELECT 1 FROM commands WHERE session_id = ? AND kind = 'message' "
+        "AND status IN ('pending', 'running') LIMIT 1",
+        (session_id,),
+    ).fetchone()
+    return row is not None
+
+
 def last_event_id(conn: sqlite3.Connection, session_id: str) -> int:
     row = conn.execute(
         "SELECT COALESCE(MAX(id), 0) AS last FROM events WHERE session_id = ?", (session_id,)

@@ -9,6 +9,7 @@ from .store import (
     enqueue,
     find_session,
     get_agent,
+    is_turn_running,
     latest_session,
     read_events,
     session_sdk_id,
@@ -117,12 +118,15 @@ function handleEvent(ev) {
       break;
     case 'turn_failed':
       add('event error', 'The turn failed: ' + p);
+      setBusy(false);
       break;
     case 'turn_cancelled':
       add('event', p ? 'Interrupted: ' + p : 'Interrupted.');
+      setBusy(false);
       break;
     case 'error':
       add('event error', 'Error: ' + p);
+      setBusy(false);
       break;
     case 'session_ready':
       meta.textContent = meta.dataset.base + ' · ready';
@@ -138,6 +142,7 @@ async function poll() {
   try {
     const res = await fetch('/api/events?after=' + after);
     const data = await res.json();
+    if (data.busy) setBusy(true);
     for (const ev of data.events) {
       after = ev.id;
       handleEvent(ev);
@@ -240,9 +245,11 @@ def make_handler(state: WebuiState):
                 conn = connect()
                 try:
                     events = read_events(conn, session_id, after)
+                    busy = is_turn_running(conn, session_id)
                 finally:
                     conn.close()
                 self.send_json({
+                    "busy": busy,
                     "events": [
                         {"id": e["id"], "kind": e["kind"], "payload": e["payload"]}
                         for e in events
