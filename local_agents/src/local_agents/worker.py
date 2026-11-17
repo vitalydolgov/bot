@@ -161,9 +161,15 @@ async def handle_command(
             set_session_status(conn, session_id, "ready")
             append_event(conn, session_id, "session_ready", client.session_id)
         elif command["kind"] == "message":
-            client = await _ensure_client(conn, loaded, sessions, session_id)
-            output = StoreOutput(conn, session_id)
-            completed = await chat.run_turn(client, payload["text"], output)
+            try:
+                client = await _ensure_client(conn, loaded, sessions, session_id)
+                output = StoreOutput(conn, session_id)
+                completed = await chat.run_turn(client, payload["text"], output)
+            except asyncio.CancelledError:
+                append_event(conn, session_id, "turn_cancelled", "")
+                append_event(conn, session_id, "turn_done", "cancelled")
+                finish_command(conn, command["id"], "done")
+                raise
             append_event(conn, session_id, "turn_done", "completed" if completed else "failed")
         elif command["kind"] == "detach":
             client = sessions.pop(session_id, None)
@@ -222,18 +228,47 @@ async def serve(project: Path, profile: str | None) -> None:
         raise SystemExit("No agents could be loaded.")
 
     sessions: dict[str, object] = {}
+    turn_task: asyncio.Task | None = None
+    turn_session_id: str | None = None
     print(f"Polling {DB_PATH} for commands. Ctrl+C to stop.", flush=True)
     try:
         async with agents.local_runtime(
             journal_factory=experimental.JsonFileSessionJournal.in_directory(JOURNAL_DIR)
         ):
             while True:
-                command = claim_command(conn, list(loaded_by_agent))
+                if turn_task is not None and turn_task.done():
+                    if not turn_task.cancelled() and (exc := turn_task.exception()) is not None:
+                        print(f"Turn failed: {exc}", flush=True)
+                    turn_task = None
+                    turn_session_id = None
+                busy = turn_task is not None
+                command = claim_command(conn, list(loaded_by_agent), only_kinds=["cancel"] if busy else None)
                 if command is None:
                     await asyncio.sleep(POLL_SECONDS)
                     continue
+                if command["kind"] == "cancel":
+                    if busy and command["session_id"] == turn_session_id:
+                        turn_task.cancel()
+                        try:
+                            await turn_task
+                        except asyncio.CancelledError:
+                            pass
+                        turn_task = None
+                        turn_session_id = None
+                    else:
+                        append_event(conn, command["session_id"], "notice", "No turn is running.")
+                    finish_command(conn, command["id"], "done")
+                    continue
+                if command["kind"] == "message":
+                    turn_session_id = command["session_id"]
+                    turn_task = asyncio.create_task(handle_command(conn, loaded_by_agent, sessions, command))
+                    continue
                 await handle_command(conn, loaded_by_agent, sessions, command)
     finally:
+        if turn_task is not None and not turn_task.done():
+            turn_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await turn_task
         for client in sessions.values():
             with contextlib.suppress(Exception):
                 await client.close()

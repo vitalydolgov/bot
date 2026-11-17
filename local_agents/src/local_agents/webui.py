@@ -40,6 +40,8 @@ PAGE = """<!DOCTYPE html>
   input[type=text]:focus { outline: none; border-color: #264f78; }
   button[type=submit] { background: #264f78; color: #fff; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; font: inherit; }
   button[type=submit]:disabled { opacity: 0.5; cursor: default; }
+  #stop { background: #5a1d1d; color: #f48771; border: 1px solid #7a2d2d; border-radius: 4px; padding: 8px 16px; cursor: pointer; font: inherit; }
+  #stop:hover { background: #6e2424; }
 </style>
 </head>
 <body>
@@ -51,6 +53,7 @@ PAGE = """<!DOCTYPE html>
 <div id="log"></div>
 <form id="composer">
   <input type="text" id="input" autocomplete="off" placeholder="Message..." autofocus>
+  <button type="button" id="stop" hidden>Stop</button>
   <button type="submit" id="send">Send</button>
 </form>
 <script>
@@ -60,8 +63,14 @@ const input = document.getElementById('input');
 const send = document.getElementById('send');
 const form = document.getElementById('composer');
 const newSession = document.getElementById('new-session');
+const stop = document.getElementById('stop');
 let after = 0;
 let assistantBubble = null;
+
+function setBusy(busy) {
+  send.disabled = busy;
+  stop.hidden = !busy;
+}
 
 function add(cls, text) {
   const div = document.createElement('div');
@@ -112,7 +121,7 @@ function handleEvent(ev) {
       meta.textContent = meta.dataset.base + ' · ready';
       break;
     case 'turn_done':
-      send.disabled = false;
+      setBusy(false);
       input.focus();
       break;
   }
@@ -145,7 +154,7 @@ form.addEventListener('submit', async (e) => {
   if (!text) return;
   add('msg user', text);
   input.value = '';
-  send.disabled = true;
+  setBusy(true);
   await fetch('/api/message', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -153,12 +162,16 @@ form.addEventListener('submit', async (e) => {
   });
 });
 
+stop.addEventListener('click', async () => {
+  await fetch('/api/cancel', {method: 'POST'});
+});
+
 newSession.addEventListener('click', async () => {
   await fetch('/api/new', {method: 'POST'});
   log.innerHTML = '';
   after = 0;
   assistantBubble = null;
-  send.disabled = false;
+  setBusy(false);
   await refreshSession();
 });
 
@@ -244,6 +257,15 @@ def make_handler(state: WebuiState):
                 conn = connect()
                 try:
                     enqueue(conn, session_id, "message", {"text": text})
+                finally:
+                    conn.close()
+                self.send_json({"ok": True})
+            elif parsed.path == "/api/cancel":
+                with state.lock:
+                    session_id = state.session_id
+                conn = connect()
+                try:
+                    enqueue(conn, session_id, "cancel", {})
                 finally:
                     conn.close()
                 self.send_json({"ok": True})
