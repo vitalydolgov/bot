@@ -10,6 +10,7 @@ from mcp_servers import load_mcps
 from modalities import detect_input_modalities
 from tools.memory import MEMORY_TOOLS, memory_instructions
 from patches.mistralai import apply_sdk_patches
+from tools.date import DATE_TOOLS
 from tools.read_image import READ_IMAGE_TOOLS
 from mistralai import agents
 from mistralai.vibe.harness.runtime.completion.providers.openai import OpenAICompletionConfig
@@ -26,6 +27,10 @@ PROMPTS_DIR = Path(__file__).resolve().parent / "instructions" / "prompts"
 MODALITY_PROMPTS = {"image": PROMPTS_DIR / "vision.md"}
 
 
+def date_instructions() -> str:
+    return (PROMPTS_DIR / "date.md").read_text(encoding="utf-8").strip()
+
+
 def modality_instructions(modalities: list[str]) -> str:
     parts = []
     for modality in modalities:
@@ -36,13 +41,13 @@ def modality_instructions(modalities: list[str]) -> str:
 
 
 modalities = CONFIG.input_modalities or detect_input_modalities(CONFIG.base_url, CONFIG.model, CONFIG.api_key_env_var)
-instructions = "\n\n".join(part for part in (modality_instructions(modalities), memory_instructions()) if part)
+instructions = "\n\n".join(part for part in (modality_instructions(modalities), date_instructions(), memory_instructions()) if part)
 
 agent = agents.Agent(
     name=PROFILE or "bot",
     model=CONFIG.model,
     instructions=instructions,
-    tools=[*MEMORY_TOOLS, *READ_IMAGE_TOOLS],
+    tools=[*MEMORY_TOOLS, *READ_IMAGE_TOOLS, *DATE_TOOLS],
     environment=agents.DangerousLocalSandbox(workspace=str(WORKSPACE_DIR)),
     skills=[agents.SandboxWorkspaceSkills()],
     mcps=load_mcps() or None,
