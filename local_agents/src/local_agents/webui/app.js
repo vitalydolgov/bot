@@ -122,6 +122,28 @@ async function refreshSession() {
   meta.textContent = meta.dataset.base;
 }
 
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault();
+    form.requestSubmit();
+    return;
+  }
+  if (!e.ctrlKey) return;
+  if (e.key === 'j' || e.key === 'J') {
+    e.preventDefault();
+    input.setRangeText('\n', input.selectionStart, input.selectionEnd, 'end');
+  } else if (e.key === 'a' || e.key === 'A') {
+    e.preventDefault();
+    const start = input.value.lastIndexOf('\n', input.selectionStart - 1) + 1;
+    input.setSelectionRange(start, start);
+  } else if (e.key === 'e' || e.key === 'E') {
+    e.preventDefault();
+    let end = input.value.indexOf('\n', input.selectionStart);
+    if (end === -1) end = input.value.length;
+    input.setSelectionRange(end, end);
+  }
+});
+
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const text = input.value.trim();
