@@ -1,6 +1,7 @@
 import json
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from .store import (
@@ -15,183 +16,13 @@ from .store import (
     session_sdk_id,
 )
 
-PAGE = """<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>local-agents</title>
-<style>
-  :root { color-scheme: dark; }
-  * { box-sizing: border-box; }
-  body { margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: #1e1e1e; color: #d4d4d4; display: flex; flex-direction: column; height: 100vh; }
-  header { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid #333; font-size: 13px; }
-  header .title { font-weight: bold; color: #fff; }
-  header .meta { color: #888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  header button { margin-left: auto; background: #2d2d2d; color: #d4d4d4; border: 1px solid #444; border-radius: 4px; padding: 4px 10px; cursor: pointer; font: inherit; }
-  header button:hover { background: #3a3a3a; }
-  #log { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
-  .msg { max-width: 80ch; padding: 8px 12px; border-radius: 6px; white-space: pre-wrap; word-wrap: break-word; line-height: 1.4; }
-  .user { align-self: flex-end; background: #264f78; color: #fff; }
-  .assistant { align-self: flex-start; background: #2d2d2d; }
-  .event { align-self: flex-start; color: #888; font-size: 14px; padding: 0 4px; }
-  .event.error { color: #f48771; }
-  form { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid #333; }
-  input[type=text] { flex: 1; background: #2d2d2d; border: 1px solid #444; border-radius: 4px; color: #d4d4d4; padding: 8px 12px; font: inherit; }
-  input[type=text]:focus { outline: none; border-color: #264f78; }
-  button[type=submit] { background: #264f78; color: #fff; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; font: inherit; }
-  button[type=submit]:disabled { opacity: 0.5; cursor: default; }
-  #stop { background: #5a1d1d; color: #f48771; border: 1px solid #7a2d2d; border-radius: 4px; padding: 8px 16px; cursor: pointer; font: inherit; }
-  #stop:hover { background: #6e2424; }
-</style>
-</head>
-<body>
-<header>
-  <span class="title">local-agents</span>
-  <span class="meta" id="meta">connecting...</span>
-  <button id="new-session" type="button">New session</button>
-</header>
-<div id="log"></div>
-<form id="composer">
-  <input type="text" id="input" autocomplete="off" placeholder="Message..." autofocus>
-  <button type="button" id="stop" hidden>Stop</button>
-  <button type="submit" id="send">Send</button>
-</form>
-<script>
-const log = document.getElementById('log');
-const meta = document.getElementById('meta');
-const input = document.getElementById('input');
-const send = document.getElementById('send');
-const form = document.getElementById('composer');
-const newSession = document.getElementById('new-session');
-const stop = document.getElementById('stop');
-let after = 0;
-let assistantBubble = null;
-
-function setBusy(busy) {
-  send.disabled = busy;
-  stop.hidden = !busy;
+WEBUI_DIR = Path(__file__).parent / "webui"
+WEBUI_FILES = {
+    "/": ("index.html", "text/html; charset=utf-8"),
+    "/index.html": ("index.html", "text/html; charset=utf-8"),
+    "/app.js": ("app.js", "application/javascript; charset=utf-8"),
+    "/style.css": ("style.css", "text/css; charset=utf-8"),
 }
-
-function nearBottom() {
-  return log.scrollHeight - log.scrollTop - log.clientHeight < 50;
-}
-
-function add(cls, text) {
-  const stick = nearBottom();
-  const div = document.createElement('div');
-  div.className = cls;
-  div.textContent = text;
-  log.appendChild(div);
-  if (stick) log.scrollTop = log.scrollHeight;
-  return div;
-}
-
-function handleEvent(ev) {
-  const p = ev.payload;
-  switch (ev.kind) {
-    case 'reply': {
-      const stick = nearBottom();
-      if (!assistantBubble) assistantBubble = add('msg assistant', '');
-      assistantBubble.textContent += p;
-      if (stick) log.scrollTop = log.scrollHeight;
-      break;
-    }
-    case 'reply_done':
-      assistantBubble = null;
-      break;
-    case 'tool_call': {
-      const d = JSON.parse(p);
-      add('event', '-> ' + d.name);
-      break;
-    }
-    case 'tool_result': {
-      const d = JSON.parse(p);
-      if (d.error) add('event error', '<- ' + d.name + ' failed: ' + d.error);
-      break;
-    }
-    case 'notice':
-      add('event', '! ' + p);
-      break;
-    case 'approval_denied':
-      add('event', '! approval denied for ' + p);
-      break;
-    case 'turn_failed':
-      add('event error', 'The turn failed: ' + p);
-      setBusy(false);
-      break;
-    case 'turn_cancelled':
-      add('event', p ? 'Interrupted: ' + p : 'Interrupted.');
-      setBusy(false);
-      break;
-    case 'error':
-      add('event error', 'Error: ' + p);
-      setBusy(false);
-      break;
-    case 'session_ready':
-      meta.textContent = meta.dataset.base + ' · ready';
-      break;
-    case 'turn_done':
-      setBusy(false);
-      input.focus();
-      break;
-  }
-}
-
-async function poll() {
-  try {
-    const res = await fetch('/api/events?after=' + after);
-    const data = await res.json();
-    if (data.busy) setBusy(true);
-    for (const ev of data.events) {
-      after = ev.id;
-      handleEvent(ev);
-    }
-  } catch (e) {
-    meta.textContent = 'connection lost';
-  }
-  setTimeout(poll, 500);
-}
-
-async function refreshSession() {
-  const res = await fetch('/api/session');
-  const data = await res.json();
-  meta.dataset.base = data.agent + ' · session ' + (data.sdk_id || data.session_id);
-  meta.textContent = meta.dataset.base;
-}
-
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const text = input.value.trim();
-  if (!text) return;
-  add('msg user', text);
-  input.value = '';
-  setBusy(true);
-  await fetch('/api/message', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({text}),
-  });
-});
-
-stop.addEventListener('click', async () => {
-  await fetch('/api/cancel', {method: 'POST'});
-});
-
-newSession.addEventListener('click', async () => {
-  await fetch('/api/new', {method: 'POST'});
-  log.innerHTML = '';
-  after = 0;
-  assistantBubble = null;
-  setBusy(false);
-  await refreshSession();
-});
-
-refreshSession().then(poll);
-</script>
-</body>
-</html>
-"""
 
 
 class WebuiState:
@@ -222,10 +53,11 @@ def make_handler(state: WebuiState):
 
         def do_GET(self):
             parsed = urlparse(self.path)
-            if parsed.path == "/":
-                body = PAGE.encode()
+            if parsed.path in WEBUI_FILES:
+                name, content_type = WEBUI_FILES[parsed.path]
+                body = (WEBUI_DIR / name).read_bytes()
                 self.send_response(200)
-                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Type", content_type)
                 self.send_header("Content-Length", str(len(body)))
                 self.end_headers()
                 self.wfile.write(body)
