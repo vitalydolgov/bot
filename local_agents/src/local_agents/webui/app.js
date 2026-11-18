@@ -47,6 +47,9 @@ function add(cls, text) {
 function handleEvent(ev) {
   const p = ev.payload;
   switch (ev.kind) {
+    case 'user_message':
+      add('msg user', p);
+      break;
     case 'reply': {
       const stick = nearBottom();
       if (!assistantBubble) {
@@ -148,7 +151,6 @@ form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const text = input.value.trim();
   if (!text) return;
-  add('msg user', text);
   input.value = '';
   setBusy(true);
   await fetch('/api/message', {

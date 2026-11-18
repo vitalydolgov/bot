@@ -142,6 +142,12 @@ class ChatModelTest(unittest.TestCase):
             conn.close()
         self.assertEqual(row["payload"], '{"text": "hello"}')
 
+    def test_send_message_appends_user_message_event(self):
+        model = ChatModel.load("bot", connect_fn=self.connect_fn)
+        model.send_message("hello")
+        events = model.events(0)["events"]
+        self.assertEqual([(e["kind"], e["payload"]) for e in events], [("user_message", "hello")])
+
     def test_send_message_enqueues_message_while_turn_running(self):
         model = ChatModel.load("bot", connect_fn=self.connect_fn)
         model.send_message("first")

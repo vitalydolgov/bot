@@ -3,6 +3,7 @@ import threading
 from collections.abc import Callable
 
 from .store import (
+    append_event,
     connect,
     create_session,
     enqueue,
@@ -95,6 +96,7 @@ class ChatModel:
         conn = self._connect()
         try:
             enqueue(conn, session_id, "message", {"text": text})
+            append_event(conn, session_id, "user_message", text)
         finally:
             conn.close()
 
