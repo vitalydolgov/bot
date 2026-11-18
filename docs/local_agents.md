@@ -35,7 +35,7 @@ Serves a web client for a served agent at `http://127.0.0.1:8000/`. The agent ar
 | `--new` | Start a fresh session instead of resuming. |
 | `--resume` | Resume a specific session, by either of its ids (see below). |
 
-The page resumes the latest session (or starts one), streams the event log into the browser, and sends messages through the same command queue. A "New session" button detaches from the current session and starts a fresh one. While a turn is running, a "Stop" button interrupts it. Stopping the server with Ctrl+C detaches from the session; it stays resumable. By default `webui` resumes the most recent session for the agent that has been started at least once.
+The page resumes the latest session (or starts one), streams the event log into the browser, and sends messages through the same command queue. A "New session" button detaches from the current session and starts a fresh one. While a turn is running, submitting a message injects it into the running turn instead of queueing it for after the turn; a "Stop" button interrupts the turn. Stopping the server with Ctrl+C detaches from the session; it stays resumable. By default `webui` resumes the most recent session for the agent that has been started at least once.
 
 ## Architecture
 
@@ -44,12 +44,12 @@ Everything goes through the store; no component talks to another directly.
 Components:
 
 - Store — a SQLite database holding the agent registry, the sessions, a command queue and an event log. It is the only shared state.
-- Worker — polls the command queue, claims one command at a time, and runs it in-process: `start` creates a session, `resume` reattaches to a journaled one, `message` runs a turn, `cancel` interrupts the running turn, `detach` releases the session. Turns append events to the log as they run.
+- Worker — polls the command queue, claims one command at a time, and runs it in-process: `start` creates a session, `resume` reattaches to a journaled one, `message` runs a turn (or, while a turn is running for the session, injects the message into it), `cancel` interrupts the running turn, `detach` releases the session. Turns append events to the log as they run.
 - Model — the web client's model layer. It owns session resolution (resume a specific session, resume the latest started one, or start a fresh one), enqueues the matching command, and holds the current session id behind a lock. It contains no HTTP code, so session loading can be exercised against a temporary store without starting the web server.
 - Web client — a thin HTTP adapter over the model. It serves the page, exposes the session, events, message, cancel and new-session endpoints, and renders the event log in the browser.
 - CLI — the entry point; wires the `serve` and `webui` subcommands to the worker and the web client.
 
-A message sent while a turn is running stays queued and runs after it; the running turn can be interrupted, which leaves the session usable.
+A message sent while a turn is running is injected into the running turn, so the agent sees it mid-turn; the running turn can be interrupted, which leaves the session usable. If the turn ends before the message is delivered, the message runs as a new turn instead.
 
 Sessions are journaled to disk, so they survive worker restarts and can be resumed in a later process.
 

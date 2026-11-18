@@ -243,7 +243,12 @@ async def serve(project: Path, profile: str | None) -> None:
                     turn_task = None
                     turn_session_id = None
                 busy = turn_task is not None
-                command = claim_command(conn, list(loaded_by_agent), only_kinds=["cancel"] if busy else None)
+                if busy:
+                    command = claim_command(conn, list(loaded_by_agent), only_kinds=["cancel"])
+                    if command is None:
+                        command = claim_command(conn, list(loaded_by_agent), only_kinds=["message"], session_id=turn_session_id)
+                else:
+                    command = claim_command(conn, list(loaded_by_agent))
                 if command is None:
                     await asyncio.sleep(POLL_SECONDS)
                     continue
@@ -261,6 +266,32 @@ async def serve(project: Path, profile: str | None) -> None:
                     finish_command(conn, command["id"], "done")
                     continue
                 if command["kind"] == "message":
+                    if busy and command["session_id"] == turn_session_id:
+                        payload = json.loads(command["payload"])
+                        client = sessions.get(turn_session_id)
+                        if client is None:
+                            append_event(conn, command["session_id"], "error", "the running turn's session is not attached")
+                            finish_command(conn, command["id"], "failed")
+                            continue
+                        from mistralai.vibe.harness.app_server import session as harness_session
+
+                        try:
+                            response = await client.send_message(
+                                [harness_session.TextContentBlock(text=payload["text"])]
+                            )
+                        except Exception as exc:
+                            append_event(conn, command["session_id"], "error", str(exc))
+                            finish_command(conn, command["id"], "failed")
+                            continue
+                        if response.steered is not True:
+                            append_event(
+                                conn,
+                                command["session_id"],
+                                "notice",
+                                "The turn had already ended; your message started a new turn whose reply will not appear here.",
+                            )
+                        finish_command(conn, command["id"], "done")
+                        continue
                     turn_session_id = command["session_id"]
                     turn_task = asyncio.create_task(handle_command(conn, loaded_by_agent, sessions, command))
                     continue

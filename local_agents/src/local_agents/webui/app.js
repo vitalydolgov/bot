@@ -1,7 +1,6 @@
 const log = document.getElementById('log');
 const meta = document.getElementById('meta');
 const input = document.getElementById('input');
-const send = document.getElementById('send');
 const form = document.getElementById('composer');
 const newSession = document.getElementById('new-session');
 const stop = document.getElementById('stop');
@@ -28,7 +27,6 @@ function renderMarkdown(src) {
 }
 
 function setBusy(busy) {
-  send.disabled = busy;
   stop.hidden = !busy;
 }
 

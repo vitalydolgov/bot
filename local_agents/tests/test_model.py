@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 from local_agents.model import ChatModel, SessionLoadError
-from local_agents.store import connect, create_session, register_agent
+from local_agents.store import connect, create_session, is_turn_running, register_agent
 
 
 class ChatModelTest(unittest.TestCase):
@@ -141,6 +141,42 @@ class ChatModelTest(unittest.TestCase):
         finally:
             conn.close()
         self.assertEqual(row["payload"], '{"text": "hello"}')
+
+    def test_send_message_enqueues_message_while_turn_running(self):
+        model = ChatModel.load("bot", connect_fn=self.connect_fn)
+        model.send_message("first")
+        model.send_message("second")
+        conn = self.connect_fn()
+        try:
+            rows = conn.execute(
+                "SELECT kind, payload FROM commands WHERE session_id = ? ORDER BY id",
+                (model.session_id,),
+            ).fetchall()
+        finally:
+            conn.close()
+        self.assertEqual([row["kind"] for row in rows], ["start", "message", "message"])
+        self.assertEqual(rows[-1]["payload"], '{"text": "second"}')
+
+    def test_send_message_enqueues_message_after_turn_done(self):
+        model = ChatModel.load("bot", connect_fn=self.connect_fn)
+        model.send_message("first")
+        conn = self.connect_fn()
+        try:
+            conn.execute("UPDATE commands SET status = 'done' WHERE kind = 'message'")
+        finally:
+            conn.close()
+        model.send_message("second")
+        self.assertEqual([kind for kind, _ in self.commands()], ["start", "message", "message"])
+
+    def test_pending_message_counts_as_turn_running(self):
+        model = ChatModel.load("bot", connect_fn=self.connect_fn)
+        model.send_message("first")
+        conn = self.connect_fn()
+        try:
+            busy = is_turn_running(conn, model.session_id)
+        finally:
+            conn.close()
+        self.assertTrue(busy)
 
     def test_events_reports_empty_log_and_idle(self):
         model = ChatModel.load("bot", connect_fn=self.connect_fn)
