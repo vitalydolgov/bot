@@ -13,6 +13,11 @@ header button:hover { background: #3a3a3a; }
 .markdown-body { background-color: transparent; color: inherit; }
 .event { align-self: flex-start; color: #888; font-size: 14px; padding: 0 4px; }
 .event.error { color: #f48771; }
+.tool-call { background: none; border: none; font-family: inherit; cursor: pointer; text-align: left; }
+.tool-call:hover { color: #d4d4d4; }
+.tool-call::before { content: '▸ '; }
+.tool-call.open::before { content: '▾ '; }
+.tool-params { align-self: flex-start; margin: 0 0 0 20px; padding: 8px 12px; max-width: 80ch; background: #252526; border: 1px solid #333; border-radius: 6px; color: #a8a8a8; font-size: 12px; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word; }
 form { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid #333; }
 textarea { flex: 1; background: #2d2d2d; border: 1px solid #444; border-radius: 4px; color: #d4d4d4; padding: 8px 12px; font: inherit; resize: none; overflow-y: auto; }
 textarea:focus { outline: none; border-color: #264f78; }

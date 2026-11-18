@@ -67,12 +67,28 @@ function handleEvent(ev) {
       break;
     case 'tool_call': {
       const d = JSON.parse(p);
-      add('event', '-> ' + d.name);
+      const stick = nearBottom();
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'event tool-call';
+      btn.textContent = d.name;
+      const pre = document.createElement('pre');
+      pre.className = 'tool-params';
+      pre.hidden = true;
+      pre.textContent = JSON.stringify(d.arguments ?? null, null, 2);
+      btn.addEventListener('click', () => {
+        pre.hidden = !pre.hidden;
+        btn.classList.toggle('open', !pre.hidden);
+        if (!pre.hidden && nearBottom()) log.scrollTop = log.scrollHeight;
+      });
+      log.appendChild(btn);
+      log.appendChild(pre);
+      if (stick) log.scrollTop = log.scrollHeight;
       break;
     }
     case 'tool_result': {
       const d = JSON.parse(p);
-      if (d.error) add('event error', '<- ' + d.name + ' failed: ' + d.error);
+      if (d.error) add('event error', '✗ ' + d.name + ' failed: ' + d.error);
       break;
     }
     case 'notice':
