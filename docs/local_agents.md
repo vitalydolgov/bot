@@ -7,8 +7,8 @@
 ```sh
 uv run local-agents serve                  # register every profile found in ~/.bots/profiles/ and poll for work
 uv run local-agents serve --profile grad   # serve only grad
-uv run local-agents chat                   # serve a web client at http://127.0.0.1:8000/
-uv run local-agents chat --new             # start a fresh session
+uv run local-agents webui                  # serve a web client at http://127.0.0.1:8000/
+uv run local-agents webui --new            # start a fresh session
 ```
 
 ### `serve`
@@ -25,7 +25,7 @@ Each profile gets its own configuration and memory. A profile that fails to load
 
 Profiles never run each other's sessions.
 
-### `chat`
+### `webui`
 
 Serves a web client for a served agent at `http://127.0.0.1:8000/`. The agent argument is optional and defaults to `bot`.
 
@@ -35,7 +35,7 @@ Serves a web client for a served agent at `http://127.0.0.1:8000/`. The agent ar
 | `--new` | Start a fresh session instead of resuming. |
 | `--resume` | Resume a specific session, by either of its ids (see below). |
 
-The page resumes the latest session (or starts one), streams the event log into the browser, and sends messages through the same command queue. A "New session" button detaches from the current session and starts a fresh one. While a turn is running, a "Stop" button interrupts it. Stopping the server with Ctrl+C detaches from the session; it stays resumable. By default `chat` resumes the most recent session for the agent that has been started at least once.
+The page resumes the latest session (or starts one), streams the event log into the browser, and sends messages through the same command queue. A "New session" button detaches from the current session and starts a fresh one. While a turn is running, a "Stop" button interrupts it. Stopping the server with Ctrl+C detaches from the session; it stays resumable. By default `webui` resumes the most recent session for the agent that has been started at least once.
 
 ## How it works
 

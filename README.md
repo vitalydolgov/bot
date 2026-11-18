@@ -87,7 +87,7 @@ Local web client with persistence — experimental. Like Remote, but without Mis
 
 ```sh
 uv run local-agents serve
-uv run local-agents chat
+uv run local-agents webui
 ```
 
 See [docs/local_agents.md](docs/local_agents.md) for details.
