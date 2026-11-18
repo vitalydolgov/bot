@@ -39,9 +39,10 @@ CREATE TABLE IF NOT EXISTS events(
 """
 
 
-def connect() -> sqlite3.Connection:
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH, timeout=30, isolation_level=None)
+def connect(db_path: Path | None = None) -> sqlite3.Connection:
+    path = db_path or DB_PATH
+    path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(path, timeout=30, isolation_level=None)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
     conn.executescript(SCHEMA)
